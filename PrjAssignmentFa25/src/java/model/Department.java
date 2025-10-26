@@ -14,40 +14,42 @@ package model;
     
     Đang thắc mắc là có phải tạo superior ở bảng này với kiểu dữ liệu 
     là Employee superior hay không?
-*/
-public class Department extends BaseModel{
-    private String name;
-    private int superior;
+
+Trả lời: Không vì superior ở đây chỉ tới superior của Department đó không phải của Employee id
+ */
+public class Department extends BaseModel {
+
+    private String dname;
+    private Department superior;
 
     public Department() {
     }
 
-    public Department(String name, int superior) {
-        this.name = name;
+    public Department(String dname, Department superior) {
+        this.dname = dname;
         this.superior = superior;
     }
 
-    public Department(String name, int superior, int id) {
+    public Department(String dname, Department superior, int id) {
         super(id);
-        this.name = name;
+        this.dname = dname;
         this.superior = superior;
     }
 
-    public String getName() {
-        return name;
+    public String getDname() {
+        return dname;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setDname(String dname) {
+        this.dname = dname;
     }
 
-    public int getSuperior() {
+    public Department getSuperior() {
         return superior;
     }
 
-    public void setSuperior(int superior) {
+    public void setSuperior(Department superior) {
         this.superior = superior;
     }
-    
-    
+
 }

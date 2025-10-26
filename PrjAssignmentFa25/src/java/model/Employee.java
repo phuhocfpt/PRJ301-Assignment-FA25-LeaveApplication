@@ -3,34 +3,39 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package model;
+
 import java.sql.*;
+
 /**
  *
  * @author phuga
  */
 
 // Sang bên class Department đọc
-public class Employee extends BaseModel{
+public class Employee extends BaseModel {
+
     private String name;
     private Date dob;
     private String address;
     private String phone;
     private Department department;
     private String email;
+    private boolean egender;
 
     public Employee() {
     }
 
-    public Employee(String name, Date dob, String address, String phone, Department department, String email) {
+    public Employee(String name, Date dob, String address, String phone, Department department, String email, boolean egender) {
         this.name = name;
         this.dob = dob;
         this.address = address;
         this.phone = phone;
         this.department = department;
         this.email = email;
+        this.egender = egender;
     }
 
-    public Employee(String name, Date dob, String address, String phone, Department department, String email, int id) {
+    public Employee(String name, Date dob, String address, String phone, Department department, String email, boolean egender, int id) {
         super(id);
         this.name = name;
         this.dob = dob;
@@ -38,6 +43,7 @@ public class Employee extends BaseModel{
         this.phone = phone;
         this.department = department;
         this.email = email;
+        this.egender = egender;
     }
 
     public String getName() {
@@ -87,6 +93,13 @@ public class Employee extends BaseModel{
     public void setEmail(String email) {
         this.email = email;
     }
-    
-    
+
+    public boolean isEgender() {
+        return egender;
+    }
+
+    public void setEgender(boolean egender) {
+        this.egender = egender;
+    }
+
 }
