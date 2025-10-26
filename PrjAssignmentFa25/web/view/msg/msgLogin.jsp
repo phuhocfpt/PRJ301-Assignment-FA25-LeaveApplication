@@ -10,16 +10,16 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>Access Denied</title>
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/error/accessDenied.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
     </head>
     <body class="auth-page">
         <!-- Bên BaseRequiredAuthenticationController req.setAttribute("errorLoginMsg", "Access Denied! You must login first!") -->
 
-        <div class="container">
-            <h1 class="error-msg">${requestScope.errorLoginMsg}</h1>
+        <div class="container-accessDenied">
+            <h1 class="errorAccessDenied-msg">${requestScope.errorLoginMsg}</h1>
 
             <!-- Thẻ p để cho chạy js thông báo redirect về trang login.jsp trong 8 seconds -->
-            <p class="redirect-msg">Redirecting to login page om <span id="timer">8</span> seconds...</p>
+            <p class="redirectAccessDenied-msg">Redirecting to login page om <span id="timer">8</span> seconds...</p>
         </div>
 
         <!-- này để trả về trang login sau 8 seconds -->
@@ -29,6 +29,6 @@
         </div>
 
         <!-- Gọi file JS -->
-        <script src="${pageContext.request.contextPath}/js/redirect.js"></script>
+        <script src="${pageContext.request.contextPath}/js/script.js"></script>
     </body>
 </html>

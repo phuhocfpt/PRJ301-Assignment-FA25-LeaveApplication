@@ -6,6 +6,7 @@ package controller.iam;
 
 import dal.iam.UserDBContext;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +20,7 @@ import jakarta.servlet.http.HttpSession;
  *
  * @author phuga
  */
+@WebServlet(urlPatterns = "/login")
 public class LoginController extends HttpServlet{
 
     @Override
@@ -32,16 +34,24 @@ public class LoginController extends HttpServlet{
             
             if(u!=null){
                 HttpSession session = req.getSession();
+                
+                // "acc" này phải khớp với "acc"
+                // trong BaseRequiredAuthenticationController
                 session.setAttribute("acc", u);
                 
-                //print successfully if match account
-                req.setAttribute("msgLogin", "Login Successful!");
+                // Đăng nhập thành công, chuyển hướng về trang chủ
+                resp.sendRedirect("home");
             } else {
-                req.setAttribute("msgLogin", "Login Failed!");
+                // Đăng nhập thất bại, đặt thông báo lỗi
+                // "errorloginMsg" này phải khớp với "errorloginMsg"
+                // trong login.jsp
+                req.setAttribute("errorloginMsg", "Login Failed! Wrong username or password.");
+                
+                // Forward (trả về) lại trang login.jsp
+                req.getRequestDispatcher("view/auth/login.jsp").forward(req, resp);
             }
             
-            //sau khi xác nhận đăng nhập in ra thông báo => Chuyển về trang jsp thông báo
-            req.getRequestDispatcher("/view/auth/mesageLogin.jsp").forward(req, resp);
+            
         } catch (SQLException ex) {
             Logger.getLogger(LoginController.class.getName()).log(Level.SEVERE, null, ex);
         }

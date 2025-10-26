@@ -1,0 +1,111 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : Oct 26, 2025, 9:15:02 PM
+    Author     : phuga
+*/
+
+/*
+ * File CSS này chứa các style dùng chung cho các trang
+ * xác thực (đăng nhập, từ chối truy cập, v.v...)
+ */
+
+body.auth-page {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f4f4f4;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+    padding: 2.5rem; /* Tăng padding */
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px; /* Giới hạn chiều rộng */
+}
+
+/* Style cho thông báo lỗi (màu đỏ) - Dùng cho accessDenied.jsp */
+h1.error-message {
+    color: #dc3545; /* Màu đỏ bootstrap cho 'danger' */
+    font-size: 1.5rem; /* Giảm kích thước font 1 chút */
+}
+
+p.redirect-message {
+    font-size: 1.1rem;
+    color: #333;
+}
+
+/* Style cho đồng hồ đếm ngược */
+#timer {
+    font-weight: bold;
+    color: #007bff; /* Màu xanh bootstrap cho 'primary' */
+}
+
+/* --- STYLE MỚI CHO FORM LOGIN --- */
+
+.auth-form h1 {
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+/* Hiển thị thông báo lỗi/thành công từ LoginController */
+.login-message {
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+.login-message.error {
+    background-color: #f8d7da; /* Màu nền đỏ nhạt */
+    color: #721c24; /* Màu chữ đỏ đậm */
+    border: 1px solid #f5c6cb;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+    text-align: left; /* Căn trái label */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; /* Quan trọng để padding không làm vỡ layout */
+    font-size: 1rem;
+}
+
+.auth-button {
+    width: 100%;
+    padding: 0.85rem;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff; /* Màu xanh primary */
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.auth-button:hover {
+    background-color: #0056b3; /* Màu xanh đậm hơn khi hover */
+}
+
+
+

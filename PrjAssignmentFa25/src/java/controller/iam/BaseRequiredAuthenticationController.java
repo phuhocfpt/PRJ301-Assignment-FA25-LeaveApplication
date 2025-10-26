@@ -42,7 +42,7 @@ public abstract class BaseRequiredAuthenticationController extends HttpServlet {
             req.setAttribute("errorLoginMsg", "Access Denied! You must login first!");
 
             // Forward đến trang JSP báo lỗi
-            req.getRequestDispatcher("/view/auth/accessDenied.jsp").forward(req, resp);
+            req.getRequestDispatcher("view/msg/msgLogin.jsp").forward(req, resp);
 
         }
     }
@@ -57,7 +57,7 @@ public abstract class BaseRequiredAuthenticationController extends HttpServlet {
             //chưa đăng nhập => set attribute 1 errorLoginMsg và trả về 1 trang display lỗi
             req.setAttribute("errorLoginMsg", "Access Denied! You must login first!");
             // Forward đến trang JSP báo lỗi
-            req.getRequestDispatcher("/view/auth/accessDenied.jsp").forward(req, resp);
+            req.getRequestDispatcher("view/msg/msgLogin.jsp").forward(req, resp);
         }
     }
 }
