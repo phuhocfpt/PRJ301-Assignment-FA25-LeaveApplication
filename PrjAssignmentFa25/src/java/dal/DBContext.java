@@ -7,20 +7,21 @@ package dal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  *
  * @author phuga
+ * @param <T>
  */
 
 //Không để là DBContext<T extends BaseModel> vì những DAO khác mà không
 //extends với BaseModel sẽ không hoạt động được và chỉ hoạt động với
 //những class model extends BaseModel
-//Vì vậy những method list, delete ... sẽ được khai báo ở những class cần 
-//dùng nó chứ không để abstract nữa để tránh lỗi phải extends BaseModel
-public abstract class DBContext{
+//Vì vậy những method list, delete ... sẽ được khai báo ở những class cần dùng
+public abstract class DBContext<T>{
     protected Connection connection;
 
     public DBContext() {
@@ -88,4 +89,5 @@ public abstract class DBContext{
     **** NOTE: MÌNH SẼ GỌI CÁI NÀY TRONG CÁC CLASS EXTENDS DBContext này thay vì phải viết
                 dài dòng và try catch CRUD
     */
+   
 }

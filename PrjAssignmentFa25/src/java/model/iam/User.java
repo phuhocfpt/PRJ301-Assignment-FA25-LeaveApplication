@@ -5,7 +5,9 @@
 package model.iam;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import model.BaseModel;
+import model.Employee;
 
 /**
  *
@@ -17,27 +19,27 @@ public class User extends BaseModel {
     private String password;
     private String displayname;
     private Timestamp created_time;
-
-    private Role role;
+    private Employee employee;
+    private ArrayList<Role> roles = new ArrayList<>();
 
     public User() {
     }
 
-    public User(String username, String password, String displayname, Timestamp created_time, Role role) {
+    public User(String username, String password, String displayname, Timestamp created_time, Employee employee) {
         this.username = username;
         this.password = password;
         this.displayname = displayname;
         this.created_time = created_time;
-        this.role = role;
+        this.employee = employee;
     }
 
-    public User(String username, String password, String displayname, Timestamp created_time, Role role, int id) {
+    public User(String username, String password, String displayname, Timestamp created_time, Employee employee, int id) {
         super(id);
         this.username = username;
         this.password = password;
         this.displayname = displayname;
         this.created_time = created_time;
-        this.role = role;
+        this.employee = employee;
     }
 
     public String getUsername() {
@@ -72,12 +74,20 @@ public class User extends BaseModel {
         this.created_time = created_time;
     }
 
-    public Role getRole() {
-        return role;
+    public Employee getEmployee() {
+        return employee;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
+    public void setEmployee(Employee employee) {
+        this.employee = employee;
+    }
+
+    public ArrayList<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(ArrayList<Role> roles) {
+        this.roles = roles;
     }
 
 }
