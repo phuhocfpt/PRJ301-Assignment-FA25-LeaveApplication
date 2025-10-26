@@ -1,0 +1,46 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : Oct 26, 2025, 9:15:02 PM
+    Author     : phuga
+*/
+
+/* * File CSS này chứa các style dùng chung cho các trang
+ * xác thực (đăng nhập, từ chối truy cập, v.v...)
+ */
+
+body.auth-page { 
+    font-family: Arial, sans-serif; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    background-color: #f4f4f4; 
+    margin: 0; 
+}
+
+.container { 
+    text-align: center; 
+    padding: 2rem; 
+    background-color: #fff; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+}
+
+/* Style cho thông báo lỗi (màu đỏ) */
+h1.error-msg { 
+    color: #dc3545; /* Màu đỏ bootstrap cho 'danger' */
+} 
+
+p.redirect-msg { 
+    font-size: 1.1rem; 
+    color: #333; 
+}
+
+/* Style cho đồng hồ đếm ngược */
+#timer { 
+    font-weight: bold; 
+    color: #007bff; /* Màu xanh bootstrap cho 'primary' */
+}
