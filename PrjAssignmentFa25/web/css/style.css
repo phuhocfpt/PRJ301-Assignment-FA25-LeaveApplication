@@ -108,4 +108,77 @@ p.redirect-message {
 }
 
 
+/* ======================================== */
+/* == STYLE CHO TRANG HOME (Thêm mới) == */
+/* ======================================== */
+.nav-bar {
+    background-color: #343a40; /* Màu nền tối */
+    padding: 0.8rem 1.5rem;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.nav-brand a {
+     font-size: 1.4em;
+     font-weight: bold;
+     color: #ffc107; /* Màu vàng */
+     text-decoration: none;
+}
+.nav-menu a {
+    color: #dee2e6; /* Màu chữ sáng hơn */
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    margin-right: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+.nav-menu a:hover, .nav-menu a.active {
+    background-color: #007bff; /* Màu xanh khi hover/active */
+    color: white;
+}
+/* Style đặc biệt cho các nút quan trọng */
+.nav-menu a.approve-link { background-color: #28a745; color: white;}
+.nav-menu a.admin-link { background-color: #dc3545; color: white;}
+.nav-menu a.approve-link:hover { background-color: #218838; }
+.nav-menu a.admin-link:hover { background-color: #c82333; }
+
+.user-info {
+    font-size: 0.95em;
+    color: #ced4da; /* Màu chữ sáng hơn */
+}
+.user-info a {
+    color: #ffc107; /* Màu vàng */
+    text-decoration: none;
+    font-weight: bold;
+    margin-left: 10px;
+}
+ .user-info a:hover {
+    text-decoration: underline;
+}
+
+.content-area {
+    padding: 2rem;
+}
+
+.welcome-section {
+    padding: 2rem;
+    text-align: center;
+    background-color: #ffffff; /* Nền trắng */
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+}
+ .welcome-section h2 {
+    margin-top: 0;
+    color: #343a40;
+}
+ .welcome-section p {
+    color: #6c757d; /* Màu chữ xám */
+    font-size: 1.1em;
+}
+.welcome-section strong {
+    color: #007bff; /* Màu xanh cho tên Role */
+}
 

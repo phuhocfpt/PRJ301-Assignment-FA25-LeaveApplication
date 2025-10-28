@@ -4,7 +4,7 @@
  */
 package controller.home;
 
-import controller.iam.BaseRequiredAuthenticationController;
+import controller.iam.BaseRequiredAuthorizationController;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,21 +17,23 @@ import model.iam.User;
  * @author phuga
  */
 @WebServlet(urlPatterns = "/home")
-public class HomeController extends BaseRequiredAuthenticationController{
+public class HomeController extends BaseRequiredAuthorizationController{
+    //tính năng home chỉ truy cập được khi mà đã đăng nhập => kế thừa authorization
+    @Override
+    protected void processPost(HttpServletRequest req, HttpServletResponse resp, User user) throws ServletException, IOException {
+        //xử lý dưới hàm get
+        processGet(req, resp, user);
+    }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp, User user) throws ServletException, IOException {
-        //gán giá trị cho user bên BaseRequiredAuthenticationController sang đây set attribute để chuyển về home.jsp
+    protected void processGet(HttpServletRequest req, HttpServletResponse resp, User user) throws ServletException, IOException {
+        //gán đối tượng User vào req => jsp
         req.setAttribute("user", user);
         
-        //chuyển tới home.jsp
+        //forward tới trang jsp
         req.getRequestDispatcher("view/home/home.jsp").forward(req, resp);
     }
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp, User user) throws ServletException, IOException {
-        
-        doGet(req, resp, user);
-    }
+    
     
 }
