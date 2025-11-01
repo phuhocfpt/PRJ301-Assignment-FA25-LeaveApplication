@@ -19,7 +19,7 @@
             <h1 class="errorAccessDenied-msg">${requestScope.errorLoginMsg}</h1>
 
             <!-- Thẻ p để cho chạy js thông báo redirect về trang login.jsp trong 8 seconds -->
-            <p class="redirectAccessDenied-msg">Redirecting to login page om <span id="timer">8</span> seconds...</p>
+            <p class="redirectAccessDenied-msg">Redirecting to login page on <span id="timer">8</span> seconds...</p>
         </div>
 
         <!-- này để trả về trang login sau 8 seconds -->

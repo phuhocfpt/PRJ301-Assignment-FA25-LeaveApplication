@@ -7,7 +7,6 @@ package dal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,13 +20,13 @@ import java.util.logging.Logger;
 //extends với BaseModel sẽ không hoạt động được và chỉ hoạt động với
 //những class model extends BaseModel
 //Vì vậy những method list, delete ... sẽ được khai báo ở những class cần dùng
-public abstract class DBContext<T>{
+public abstract class DBContext{
     protected Connection connection;
 
     public DBContext() {
         try {
             String user = "sa";
-            String pass = "12345";
+            String pass = "123";
             String url = "jdbc:sqlserver://localhost:1433;databaseName=PRJ301Assignment;encrypt=true;trustServerCertificate=true;";
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
             connection = DriverManager.getConnection(url, user, pass);

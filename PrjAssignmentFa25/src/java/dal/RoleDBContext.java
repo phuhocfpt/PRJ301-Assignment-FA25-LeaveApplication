@@ -15,60 +15,69 @@ import model.iam.Feature;
  *
  * @author phuga
  */
-public class RoleDBContext extends DBContext<Role> {
+public class RoleDBContext extends DBContext {
 
     public ArrayList<Role> getByUserId(int id) {
         ArrayList<Role> roles = new ArrayList<>();
-        PreparedStatement stm_role = null;
-        PreparedStatement stm_feature = null;
-        ResultSet rs_role = null;
-        ResultSet rs_feature = null;
+        PreparedStatement stm = null;
+        ResultSet rs = null;
         try {
 
-            // Lấy tất cả role
-            String sql_role = """
-                            SELECT r.rid, r.rname, r.rcode, r.rlevel
-                            FROM Role r
-                            INNER JOIN UserRole ur ON r.rid = ur.rid
-                            WHERE ur.uid = ?""";
-            
+            // Lấy tất cả Role và Feature của 1 User
+            String sql_roleAndFeatureOfAUser = """
+                         SELECT r.rid, r.rname, r.rcode, r.rlevel, f.fid, f.url
+                         FROM [User] u 
+                             INNER JOIN [UserRole] ur ON u.uid = ur.uid
+                             INNER JOIN [Role] r ON r.rid = ur.rid
+                             INNER JOIN [RoleFeature] rf ON rf.rid = r.rid
+                             INNER JOIN [Feature] f ON f.fid = rf.fid
+                         WHERE u.uid = ?
+                         ORDER BY r.rid ASC"""; //id ascending
+
             //stm_role ở trên đang null
-            stm_role = connection.prepareStatement(sql_role);
-            stm_role.setInt(1, id);
-            rs_role = stm_role.executeQuery();
+            stm = connection.prepareStatement(sql_roleAndFeatureOfAUser);
+            stm.setInt(1, id);
+            rs = stm.executeQuery();
+            Role r = null; //để trong vòng lặp thì mỗi lần while sẽ resert role => null
 
             // Với mỗi Role tìm được...
-            while (rs_role.next()) {
-                Role r = new Role();
-                r.setId(rs_role.getInt("rid"));
-                r.setRname(rs_role.getString("rname"));
-                r.setRcode(rs_role.getString("rcode"));
-                r.setRlevel(rs_role.getInt("rlevel"));
+            while (rs.next()) {
+                int rid = rs.getInt("rid");
 
-                // Lấy all feature của role đó
-                String sql_feature = """
-                                     SELECT f.fid, f.url
-                                     FROM Feature f
-                                     INNER JOIN RoleFeature rf ON f.fid = rf.fid
-                                     WHERE rf.rid = ?""";
+                //check xem role đang check có phải new Role không
+                if (r == null || rid != r.getId()) {
+                    //if new role
+                    r = new Role();
 
-                ArrayList<Feature> features = new ArrayList<>();
-                
-                //stm_feature trên kia khai báo null
-                stm_feature = connection.prepareStatement(sql_feature);
-                stm_feature.setInt(1, r.getId()); // Dùng ID của Role vừa lấy
-                rs_feature = stm_feature.executeQuery();
+                    r.setId(rid); //gán id cho
+//                    r.setId(rs.getInt("rid"));
+/*
+không dùng lệnh cmt để set id => lỗi gán id
+vd: đầu vào a2, uid = 1, rid = 5(EMP)
+                // So sánh rid (mới, là 5) với rid của Role (cũ, đang ghi nhớ).
+                // - Sẽ TRUE ở lần lặp đầu tiên (vì currentRole == null)
+                // - Sẽ FALSE ở lần lặp 2, 3 (vì 5 == 5)
+                // - Sẽ TRUE khi bắt đầu một Role mới (ví dụ: rid = 4)
+                     */
 
-                // Nạp các Feature vào trong Role
-                while (rs_feature.next()) {
-                    Feature f = new Feature();
-                    f.setId(rs_feature.getInt("fid"));
-                    f.setUrl(rs_feature.getString("url"));
-                    features.add(f);
+                    r.setRname(rs.getString("rname"));
+                    r.setRcode(rs.getString("rcode"));
+                    r.setRlevel(rs.getInt("rlevel"));
+
+                    //add vào arrayList
+                    roles.add(r);
                 }
 
-                r.setFeatures(features); // Gán danh sách Feature vào Role
-                roles.add(r); // Add role có feature vào ArrayList roles    
+                // Lấy all feature của role đó
+
+                Feature f = new Feature();
+                f.setId(rs.getInt("fid"));
+                f.setUrl(rs.getString("url"));
+                
+                //check getFeature trog class Role(return về 1 arrayList)
+                if(r.getFeatures() != null){
+                    r.getFeatures().add(f); //thêm feature đó vào list
+                }
             }
         } catch (SQLException ex) {
             Logger.getLogger(RoleDBContext.class.getName()).log(Level.SEVERE, null, ex);

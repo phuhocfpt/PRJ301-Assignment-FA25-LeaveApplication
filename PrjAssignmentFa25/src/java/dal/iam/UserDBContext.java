@@ -45,12 +45,15 @@ public class UserDBContext extends DBContext {
                 User u = new User();
                 Employee e = new Employee();
                 e.setId(rs.getInt("eid"));
-                e.setName(rs.getString("ename"));
+                e.setName(rs.getNString("ename"));
+                e.setEmail(rs.getString("email"));
                 u.setEmployee(e);
-
-                u.setUsername(username);
+                
+                
                 u.setId(rs.getInt("uid"));
-                u.setDisplayname(rs.getString("displayname"));
+                u.setUsername(rs.getString("username"));
+                u.setDisplayname(rs.getNString("displayname"));
+                u.setCreated_time(rs.getTimestamp("created_time"));
 
                 return u;
             }
