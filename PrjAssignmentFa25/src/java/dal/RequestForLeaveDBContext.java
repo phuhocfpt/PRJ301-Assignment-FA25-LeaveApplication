@@ -60,11 +60,13 @@ public class RequestForLeaveDBContext extends DBContext {
                 - Khác so với ĐỌC dữ liệu:(tạo đối tượng class đó bên đây rồi mang đi so sánh với
                 - Còn GHI dữ liệu thì như này (ngược lại so với đọc) (lấy dữ liệu từ controller và adapt vào sql statement trên kia)
             */
-            stm.setString(1, rfl.getCreatedBy().getId());
+//            stm.setString(1, rfl.getCreatedBy().getId());
             
         } catch (SQLException ex) {
             Logger.getLogger(RequestForLeaveDBContext.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        return 1;   // mai làm lại
     }
 
     //Tính năng tạo đơn
