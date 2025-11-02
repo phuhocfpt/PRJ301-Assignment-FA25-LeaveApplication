@@ -69,7 +69,9 @@ vd: đầu vào a2, uid = 1, rid = 5(EMP)
                 }
 
                 // Lấy all feature của role đó
-
+                //vì trong role khi tạo constructer(tạo đối tượng sẽ tạo ra)
+                //1 list như: private ArrayList<Feature> features = new ArrayList<>();
+                //nên không cần tạo arrayList ở đây để lưu feature của role đó mà gán vào list của từng user luôn
                 Feature f = new Feature();
                 f.setId(rs.getInt("fid"));
                 f.setUrl(rs.getString("url"));

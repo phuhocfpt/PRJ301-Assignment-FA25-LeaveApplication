@@ -33,6 +33,12 @@ public abstract class BaseRequiredAuthenticationController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (isAuthenticated(req)) {
+            //FIX lỗi return về sau khi logout 
+            // => không lưu cache
+            resp.setHeader("Cache-Control", "no-cache, no-store, must-relogin");
+            resp.setHeader("Pragma", "no-cache");
+            resp.setDateHeader("Expires", 0);
+
             //exec , autheticate -->user
             //nếu đăng nhập done => Lấy user => Thực hiện hàm doPost ở trên override
             User user = (User) req.getSession().getAttribute("acc");
@@ -50,6 +56,13 @@ public abstract class BaseRequiredAuthenticationController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (isAuthenticated(req)) {
+            //FIX lỗi return về sau khi logout 
+            // => không lưu cache
+            resp.setHeader("Cache-Control", "no-cache, no-store, must-relogin");
+            resp.setHeader("Pragma", "no-cache");
+            resp.setDateHeader("Expires", 0);
+
+            
             //Nếu đăng nhập => Thực hiện hàm doGet của sub servlet
             User user = (User) req.getSession().getAttribute("acc");
             doGet(req, resp, user);
