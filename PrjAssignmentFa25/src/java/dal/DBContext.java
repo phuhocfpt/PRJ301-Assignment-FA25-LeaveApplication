@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 /**
  *
  * @author phuga
- * @param <T>
  */
 
 //Không để là DBContext<T extends BaseModel> vì những DAO khác mà không
