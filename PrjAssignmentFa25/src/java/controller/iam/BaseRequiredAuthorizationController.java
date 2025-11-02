@@ -4,7 +4,7 @@
  */
 package controller.iam;
 
-import dal.RoleDBContext;
+import dal.iam.RoleDBContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
