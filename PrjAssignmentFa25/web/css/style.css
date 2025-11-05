@@ -10,53 +10,65 @@ Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/CascadeStyleSheet.css
 /*
  * File CSS này chứa các style dùng chung cho các trang
  * xác thực (đăng nhập, từ chối truy cập, v.v...)
+ * VÀ các trang khác trong ứng dụng.
  */
 
-body.auth-page {
+/* ======================================== */
+/* == STYLE CHUNG CHO BODY (Tất cả trang) == */
+/* ======================================== */
+body {
     font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f8f9fa; /* Màu nền sáng chung */
+    color: #333; /* Màu chữ mặc định */
+}
+
+/* ======================================== */
+/* == STYLE CHO TRANG XÁC THỰC (auth) == */
+/* ======================================== */
+body.auth-page {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f4f4f4;
-    margin: 0;
+    background-color: #f4f4f4; /* Nền riêng cho trang auth */
 }
 
-.container {
+.auth-container { /* Đổi tên từ container để tránh trùng */
     text-align: center;
-    padding: 2.5rem; /* Tăng padding */
+    padding: 2.5rem;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 400px; /* Giới hạn chiều rộng */
+    max-width: 400px;
 }
 
-/* Style cho thông báo lỗi (màu đỏ) - Dùng cho accessDenied.jsp */
-h1.error-message {
-    color: #dc3545; /* Màu đỏ bootstrap cho 'danger' */
-    font-size: 1.5rem; /* Giảm kích thước font 1 chút */
+/* Style cho thông báo lỗi Access Denied */
+.container-accessDenied {
+    text-align: center;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
-
-p.redirect-message {
+h1.errorAccessDenied-msg {
+    color: #dc3545; /* Màu đỏ */
+}
+p.redirectAccessDenied-msg {
     font-size: 1.1rem;
     color: #333;
 }
-
-/* Style cho đồng hồ đếm ngược */
 #timer {
     font-weight: bold;
-    color: #007bff; /* Màu xanh bootstrap cho 'primary' */
+    color: #007bff; /* Màu xanh */
 }
 
-/* --- STYLE MỚI CHO FORM LOGIN --- */
-
+/* Style cho form login */
 .auth-form h1 {
     color: #333;
     margin-bottom: 1.5rem;
 }
-
-/* Hiển thị thông báo lỗi/thành công từ LoginController */
 .login-message {
     font-size: 0.95rem;
     padding: 0.75rem 1rem;
@@ -64,52 +76,46 @@ p.redirect-message {
     margin-bottom: 1rem;
 }
 .login-message.error {
-    background-color: #f8d7da; /* Màu nền đỏ nhạt */
-    color: #721c24; /* Màu chữ đỏ đậm */
+    background-color: #f8d7da;
+    color: #721c24;
     border: 1px solid #f5c6cb;
 }
-
 .form-group {
     margin-bottom: 1rem;
-    text-align: left; /* Căn trái label */
+    text-align: left;
 }
-
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
     color: #555;
 }
-
 .form-group input {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid #ccc;
     border-radius: 5px;
-    box-sizing: border-box; /* Quan trọng để padding không làm vỡ layout */
+    box-sizing: border-box;
     font-size: 1rem;
 }
-
 .auth-button {
     width: 100%;
     padding: 0.85rem;
     border: none;
     border-radius: 5px;
-    background-color: #007bff; /* Màu xanh primary */
+    background-color: #007bff;
     color: white;
     font-size: 1.1rem;
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
-
 .auth-button:hover {
-    background-color: #0056b3; /* Màu xanh đậm hơn khi hover */
+    background-color: #0056b3;
 }
 
-
 /* ======================================== */
-/* == STYLE CHO TRANG HOME (Thêm mới) == */
+/* == STYLE CHO TRANG HOME (Nav & Content) == */
 /* ======================================== */
 .nav-bar {
     background-color: #343a40; /* Màu nền tối */
@@ -138,7 +144,6 @@ p.redirect-message {
     background-color: #007bff; /* Màu xanh khi hover/active */
     color: white;
 }
-/* Style đặc biệt cho các nút quan trọng */
 .nav-menu a.approve-link { background-color: #28a745; color: white;}
 .nav-menu a.admin-link { background-color: #dc3545; color: white;}
 .nav-menu a.approve-link:hover { background-color: #218838; }
@@ -160,6 +165,8 @@ p.redirect-message {
 
 .content-area {
     padding: 2rem;
+    max-width: 1000px; /* Tăng max-width cho trang list */
+    margin: 0 auto; /* Căn giữa */
 }
 
 .welcome-section {
@@ -182,3 +189,167 @@ p.redirect-message {
     color: #007bff; /* Màu xanh cho tên Role */
 }
 
+/* ======================================== */
+/* == STYLE CHO FORM TẠO ĐƠN (create.jsp) == */
+/* ======================================== */
+
+.form-container {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.form-container h1 {
+    margin-top: 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    color: #343a40;
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 cột bằng nhau */
+    gap: 1.5rem; /* Khoảng cách giữa các ô */
+}
+.form-group-full {
+    grid-column: 1 / -1; /* Ô này chiếm toàn bộ 2 cột */
+}
+.form-container .form-group label {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    display: block;
+    color: #495057;
+}
+.form-container .form-group input[type="text"], /* Sửa: từ date sang text */
+.form-container .form-group select,
+.form-container .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    box-sizing: border-box; /* Quan trọng */
+    font-size: 1rem;
+    font-family: Arial, sans-serif;
+}
+.form-container .form-group textarea {
+    min-height: 120px;
+    resize: vertical; /* Cho phép kéo dọc */
+}
+.form-submit-button {
+    padding: 0.85rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    background-color: #28a745; /* Màu xanh lá (success) */
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 1rem;
+}
+.form-submit-button:hover {
+    background-color: #218838; /* Xanh đậm hơn */
+}
+#reasonDetailsGroup {
+    display: none;
+}
+
+/* ======================================== */
+/* == STYLE CHO TRANG LIST (Tabs, Table) == */
+/* ======================================== */
+
+.tab-container {
+    display: flex;
+    border-bottom: 2px solid #dee2e6;
+    margin-bottom: 1.5rem;
+}
+.tab-link {
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 3px solid transparent;
+}
+.tab-link.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
+.tab-content {
+    display: none; /* Ẩn tất cả tab content ban đầu */
+}
+.tab-content.active {
+    display: block; /* Hiển thị tab content được chọn */
+}
+
+.request-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    overflow: hidden; /* Để bo góc */
+}
+.request-table th, .request-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+.request-table th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-size: 0.9em;
+    text-transform: uppercase;
+}
+.request-table tr:last-child td {
+    border-bottom: none;
+}
+.request-table tr:hover {
+    background-color: #f1f3f5;
+}
+
+/* Định dạng các Trạng thái (Status) */
+.status {
+    padding: 0.3rem 0.6rem;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: 0.85em;
+}
+.status-pending { /* 0 */
+    background-color: #fff3cd;
+    color: #856404;
+}
+.status-approved { /* 1 */
+    background-color: #d4edda;
+    color: #155724;
+}
+.status-rejected { /* 2 */
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* ======================================== */
+/* == STYLE MỚI CHO PHÂN TRANG (Pagination) == */
+/* ======================================== */
+.pagination {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+.pagination a {
+    color: #007bff;
+    text-decoration: none;
+    padding: 0.5rem 0.75rem;
+    margin: 0 2px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+.pagination a:hover {
+    background-color: #e9ecef;
+}
+.pagination a.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    font-weight: bold;
+}
