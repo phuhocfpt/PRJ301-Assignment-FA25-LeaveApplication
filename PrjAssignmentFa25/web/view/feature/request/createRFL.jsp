@@ -4,6 +4,7 @@
     Author     : phuga
 --%>
 
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
@@ -65,16 +66,18 @@
                     <div class="form-grid">
 
                         <%-- Cột 1 --%>
-                        <div class="form-group">
-                            <label for="fromdate">Từ Ngày:</label>
-                            <input type="date" id="fromdate" name="fromdate" required>
-                        </div>
-
-                        <%-- Cột 2 --%>
-                        <div class="form-group">
-                            <label for="todate">Đến Ngày:</label>
-                            <input type="date" id="todate" name="todate" required>
-                        </div>
+                    <div class="form-group">
+                        <label for="fromdate">Từ Ngày:</label>
+                        <%-- SỬA LỖI: Đổi type="date" thành type="text" và thêm placeholder --%>
+                        <input type="text" id="fromdate" name="fromdate" placeholder="dd/MM/yyyy" required>
+                    </div>
+                    
+                    <%-- Cột 2 --%>
+                    <div class="form-group">
+                        <label for="todate">Đến Ngày:</label>
+                        <%-- SỬA LỖI: Đổi type="date" thành type="text" và thêm placeholder --%>
+                        <input type="text" id="todate" name="todate" placeholder="dd/MM/yyyy" required>
+                    </div>
 
                         <%-- Hàng 2 (Full cột) --%>
                         <div class="form-group form-group-full">

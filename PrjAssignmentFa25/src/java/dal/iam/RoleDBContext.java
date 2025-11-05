@@ -18,7 +18,7 @@ import model.iam.Feature;
  */
 public class RoleDBContext extends DBContext {
 
-    public ArrayList<Role> getByUserId(int id) {
+    public ArrayList<Role> getByUserId(int id) throws SQLException {
         ArrayList<Role> roles = new ArrayList<>();
         PreparedStatement stm = null;
         ResultSet rs = null;
@@ -39,6 +39,7 @@ public class RoleDBContext extends DBContext {
             stm = connection.prepareStatement(sql_roleAndFeatureOfAUser);
             stm.setInt(1, id);
             rs = stm.executeQuery();
+            //current Role để check
             Role r = null; //để trong vòng lặp thì mỗi lần while sẽ resert role => null
 
             // Với mỗi Role tìm được...
@@ -84,7 +85,14 @@ vd: đầu vào a2, uid = 1, rid = 5(EMP)
             }
         } catch (SQLException ex) {
             Logger.getLogger(RoleDBContext.class.getName()).log(Level.SEVERE, null, ex);
+            throw ex;
         } finally {
+            if(rs != null){
+                rs.close();
+            }
+            if(stm != null){
+                stm.close();
+            }
             closeConnection();
         }
 

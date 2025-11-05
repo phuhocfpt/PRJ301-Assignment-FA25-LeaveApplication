@@ -16,44 +16,52 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.iam.User;
 import jakarta.servlet.http.HttpSession;
+
 /**
  *
  * @author phuga
  */
 @WebServlet(urlPatterns = "/login")
-public class LoginController extends HttpServlet{
+public class LoginController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
             String username = req.getParameter("username");
             String password = req.getParameter("password");
-            
+
             UserDBContext ud = new UserDBContext();
             User u = ud.get(username, password);
-            
-            if(u!=null){
+
+            if (u != null) {
                 HttpSession session = req.getSession();
-                
+
                 // "acc" này phải khớp với "acc"
                 // trong BaseRequiredAuthenticationController
                 session.setAttribute("acc", u);
-                
+
                 // Đăng nhập thành công, chuyển hướng về trang chủ
-                resp.sendRedirect("home");
+                resp.sendRedirect(req.getContextPath() + "/home");
             } else {
                 // Đăng nhập thất bại, đặt thông báo lỗi
                 // "errorloginMsg" này phải khớp với "errorloginMsg"
                 // trong login.jsp
                 req.setAttribute("errorloginMsg", "Login Failed! Wrong username or password.");
-                
+
                 // Forward (trả về) lại trang login.jsp
-                req.getRequestDispatcher("view/auth/login.jsp").forward(req, resp);
+                req.getRequestDispatcher("/view/auth/login.jsp").forward(req, resp);
             }
-            
-            
+
         } catch (SQLException ex) {
             Logger.getLogger(LoginController.class.getName()).log(Level.SEVERE, null, ex);
+            // Thêm xử lý lỗi nếu CSDL (DBContext) không kết nối được
+            req.setAttribute("errorloginMsg", "Database error: " + ex.getMessage());
+            req.getRequestDispatcher("/view/auth/login.jsp").forward(req, resp);
+        } catch (RuntimeException ex) {
+            // Bắt lỗi RuntimeException (ví dụ: DBContext thất bại)
+            Logger.getLogger(LoginController.class.getName()).log(Level.SEVERE, null, ex);
+            req.setAttribute("errorloginMsg", "System error: " + ex.getMessage());
+            req.getRequestDispatcher("/view/auth/login.jsp").forward(req, resp);
         }
     }
 
@@ -63,5 +71,5 @@ public class LoginController extends HttpServlet{
         //trong quá trình đăng nhập xử lí bằng doPost bên trên
         req.getRequestDispatcher("/view/auth/login.jsp").forward(req, resp);
     }
-    
+
 }

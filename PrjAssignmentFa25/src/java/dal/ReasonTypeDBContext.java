@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 public class ReasonTypeDBContext extends DBContext {
     //lấy all lí do từ sql
 
-    public ArrayList<ReasonType> listsReason() {
+    public ArrayList<ReasonType> listsReason() throws SQLException {
         ArrayList<ReasonType> reasons = new ArrayList<>();
         PreparedStatement stm = null;
         ResultSet rs = null;
@@ -46,17 +46,16 @@ public class ReasonTypeDBContext extends DBContext {
 
         } catch (SQLException ex) {
             Logger.getLogger(ReasonTypeDBContext.class.getName()).log(Level.SEVERE, null, ex);
+            throw ex; //ném lỗi xử lysowr controller
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (stm != null) {
-                    stm.close();
-                }
-            } catch (SQLException ex) {
-                Logger.getLogger(ReasonTypeDBContext.class.getName()).log(Level.SEVERE, null, ex);
+
+            if (rs != null) {
+                rs.close();
             }
+            if (stm != null) {
+                stm.close();
+            }
+
             closeConnection();
         }
 

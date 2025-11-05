@@ -31,6 +31,7 @@ public abstract class DBContext{
             connection = DriverManager.getConnection(url, user, pass);
         } catch (ClassNotFoundException | SQLException ex) { //lỗi không inport file jar jdbc
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
+            throw new RuntimeException("Không thể kết nối CSDL", ex);
         }
         //nổ lỗi
         

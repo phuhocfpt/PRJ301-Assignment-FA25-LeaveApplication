@@ -12,8 +12,10 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.sql.Date;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,6 +32,12 @@ public class CreateController extends BaseRequiredAuthorizationController {
 
     @Override
     protected void processPost(HttpServletRequest req, HttpServletResponse resp, User user) throws ServletException, IOException {
+        //DateTimeFormatter mình định dạng là dd/MM/yyyy nhưng khi mà tạo đơn
+        //và gửi về bên sql thì nó nhận dạng yyyy/MM/dd nên cần tại đối tượng này
+        //với LocalDate và khi set gtri vào rfl cần phải dùng java.sql để nó về định
+        //dạng đúng như sql yyyy/MM/dd (dòng 59,60)
+        DateTimeFormatter formatdate = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
         try {
             //Xử lí form đó
             //Take data of insert query
@@ -42,8 +50,14 @@ public class CreateController extends BaseRequiredAuthorizationController {
             String reasonOthers = req.getParameter("reasondetails");
 
             RequestForLeave rfl = new RequestForLeave();
-            rfl.setFromDate(Date.valueOf(fromDateStr)); //Gán fromDate vào đơn xin nghỉ
-            rfl.setToDate(Date.valueOf(toDateStr)); // gán toDate vào đơn xin nghỉ
+
+            //Chuyển từ String -> obj localdate 
+            LocalDate localFromDate = LocalDate.parse(fromDateStr, formatdate);
+            LocalDate localToDate = LocalDate.parse(toDateStr, formatdate);
+
+            //add local date đó vào sql 
+            rfl.setFromDate(java.sql.Date.valueOf(localFromDate)); //Gán fromDate vào đơn xin nghỉ
+            rfl.setToDate(java.sql.Date.valueOf(localToDate)); // gán toDate vào đơn xin nghỉ
 
             //get in4 user(empName, did, ...) on session
             rfl.setCreatedBy(user.getEmployee()); //empName, ...
@@ -76,30 +90,45 @@ public class CreateController extends BaseRequiredAuthorizationController {
         } catch (SQLException ex) {
             Logger.getLogger(CreateController.class.getName()).log(Level.SEVERE, null, ex);
             resp.getWriter().println("Lỗi DB. Lỗi: " + ex);
-            
-        } catch (Exception e){ //bắt thêm lỗi nhập date sai, parseInt lỗi thì đều trả về form tạo đơn
-            Logger.getLogger(CreateController.class.getName()).log(Level.SEVERE, null, e);
+
+        } catch (DateTimeParseException | NumberFormatException ex) { try {
+            //bắt thêm lỗi nhập date sai, parseInt lỗi thì đều trả về form tạo đơn
+            Logger.getLogger(CreateController.class.getName()).log(Level.WARNING, null, ex);
             req.setAttribute("errorMessage", "Định dạng dữ liệu không hợp lệ.");
-            ReasonTypeDBContext reasonDAO = new ReasonTypeDBContext();
-            req.setAttribute("reasonTypes", reasonDAO.listsReason());
-            req.getRequestDispatcher("/view/feature/request/createRFL.jsp").forward(req, resp);
+            loadReasonsAndForward(req, resp); // Gọi hàm helper
+            } catch (SQLException ex1) {
+                Logger.getLogger(CreateController.class.getName()).log(Level.SEVERE, null, ex1);
+            }
         }
 
     }
 
+    //hàm helper này khắc phục ở trên khi không catch Exception nói chung nó giúp tải lại reasonTypes(downlist) về form
+    //POST cần vi khi gửi đi lỗi thì processGet không run
+    // => Tải lại ReasonType và setAtt vào request và trả về trang nhập form
+    private void loadReasonsAndForward(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
+        ReasonTypeDBContext reasonDAO = new ReasonTypeDBContext();
+        req.setAttribute("reasonTypes", reasonDAO.listsReason());
+        req.getRequestDispatcher("/view/feature/request/createRFL.jsp").forward(req, resp);
+    }
+
     @Override
     protected void processGet(HttpServletRequest req, HttpServletResponse resp, User user) throws ServletException, IOException {
-        //Hiển thị form để nhập
-
-        //trả về reason để tạo đơn
-        ReasonTypeDBContext reasons = new ReasonTypeDBContext();
-
-        ArrayList<ReasonType> reasonTypes = reasons.listsReason();
-
-        //truyền list về
-        req.setAttribute("reasonTypes", reasonTypes);
-
-        req.getRequestDispatcher("/view/feature/request/createRFL.jsp").forward(req, resp);
+        try {
+            //Hiển thị form để nhập
+            
+            //trả về reason để tạo đơn
+            ReasonTypeDBContext reasons = new ReasonTypeDBContext();
+            
+            ArrayList<ReasonType> reasonTypes = reasons.listsReason();
+            
+            //truyền list về
+            req.setAttribute("reasonTypes", reasonTypes);
+            
+            req.getRequestDispatcher("/view/feature/request/createRFL.jsp").forward(req, resp);
+        } catch (SQLException ex) {
+            Logger.getLogger(CreateController.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
 }

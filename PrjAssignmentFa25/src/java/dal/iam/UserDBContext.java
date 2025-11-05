@@ -10,6 +10,7 @@ import model.iam.User;
 import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import model.Department;
 import model.Employee;
 
 /**
@@ -19,6 +20,8 @@ import model.Employee;
 public class UserDBContext extends DBContext {
 
     public User get(String username, String password) throws SQLException {
+        PreparedStatement stm = null;
+        ResultSet rs = null;
         try {
             String sql = """
                      SELECT
@@ -28,7 +31,8 @@ public class UserDBContext extends DBContext {
                          u.created_time, 
                          e.eid,
                          e.ename,
-                         e.email 
+                         e.email,
+                         e.did
                      FROM [User] u 
                          INNER JOIN [Enrollment] en ON u.[uid] = en.[uid]
                          INNER JOIN [Employee] e ON e.eid = en.eid
@@ -36,19 +40,28 @@ public class UserDBContext extends DBContext {
                          u.username = ? AND u.[password] = ?
                          AND en.active = 1""";
 
-            PreparedStatement stm = connection.prepareStatement(sql);
+            stm = connection.prepareStatement(sql);
             stm.setString(1, username);
             stm.setString(2, password);
-            ResultSet rs = stm.executeQuery();
+            rs = stm.executeQuery();
 
             while (rs.next()) {
-                User u = new User();
+
                 Employee e = new Employee();
+                User u = new User();
+                Department d = new Department();
+                //set emp i4
                 e.setId(rs.getInt("eid"));
                 e.setName(rs.getNString("ename"));
                 e.setEmail(rs.getString("email"));
-                u.setEmployee(e);
+
+                //gán did cho emp
+                //sửa lỗi null department cho form create
                 
+                d.setId(rs.getInt("did")); //did from db
+                e.setDepartment(d); //gán depts vào emp
+                u.setEmployee(e); //gán emp vào user
+                //set user i4
                 
                 u.setId(rs.getInt("uid"));
                 u.setUsername(rs.getString("username"));
@@ -59,7 +72,14 @@ public class UserDBContext extends DBContext {
             }
         } catch (SQLException ex) {
             Logger.getLogger(UserDBContext.class.getName()).log(Level.SEVERE, null, ex);
+            throw ex; //lỗi gửi sang Controller
         } finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (stm != null) {
+                stm.close();
+            }
             closeConnection();
         }
         return null; //nếu không đúng thông tin hoặc không thỏa mãn đăng nhập(active = 0, ..) thì sẽ return về null

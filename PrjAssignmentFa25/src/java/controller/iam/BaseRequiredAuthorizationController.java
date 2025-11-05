@@ -9,6 +9,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.iam.Feature;
 import model.iam.Role;
 import model.iam.User;
@@ -19,7 +22,7 @@ import model.iam.User;
  */
 public abstract class BaseRequiredAuthorizationController extends BaseRequiredAuthenticationController {
 
-    private boolean isAuthorized(HttpServletRequest req, User user) {
+    private boolean isAuthorized(HttpServletRequest req, User user) throws SQLException {
         //Check người dùng (user) có role hay role rỗng không
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             RoleDBContext rdc = new RoleDBContext();
@@ -38,12 +41,15 @@ public abstract class BaseRequiredAuthorizationController extends BaseRequiredAu
         //lặp role của user để check
         for (Role role : user.getRoles()) {
             //với mỗi role => lặp qua các feature của role đó
-            for (Feature feature : role.getFeatures()) {
-                // so sánh url từ contextPath kia với các url trong feature của role đó
-                if (feature.getUrl() != null && feature.getUrl().equals(url)) {
-                    //tìm thấy => true => xác thực
-                    return true;
+            if (role.getFeatures() != null) {
+                for (Feature feature : role.getFeatures()) {
+                    // so sánh url từ contextPath kia với các url trong feature của role đó
+                    if (feature.getUrl() != null && feature.getUrl().equals(url)) {
+                        //tìm thấy => true => xác thực
+                        return true;
+                    }
                 }
+
             }
         }
 
@@ -59,12 +65,19 @@ public abstract class BaseRequiredAuthorizationController extends BaseRequiredAu
     //override 2 method abstract của lớp cha
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp, User user) throws ServletException, IOException {
-        if (isAuthorized(req, user)) { // Kiểm tra Vòng 2
-            // Nếu có quyền, gọi hàm processPost của lớp Con để xử lý nghiệp vụ
-            processPost(req, resp, user);
-        } else {
-            // Nếu không có quyền, báo lỗi và chuyển đến trang báo lỗi (8 giây)
-            req.setAttribute("errorLoginMsg", "Access Denied! You do not have permission to access this page.");
+        try {
+            if (isAuthorized(req, user)) { // Kiểm tra Vòng 2
+                // Nếu có quyền, gọi hàm processPost của lớp Con để xử lý nghiệp vụ
+                processPost(req, resp, user);
+            } else {
+                // Nếu không có quyền, báo lỗi và chuyển đến trang báo lỗi (8 giây)
+                req.setAttribute("errorLoginMsg", "Access Denied! You do not have permission to access this page.");
+                req.getRequestDispatcher("view/msg/msgLogin.jsp").forward(req, resp);
+            }
+        } catch (SQLException ex) {
+            //RoleDBContext.getByUserID() fail
+            Logger.getLogger(BaseRequiredAuthorizationController.class.getName()).log(Level.SEVERE, null, ex);
+            req.setAttribute("errorLoginMsg", "Lỗi CSDL khi kiểm tra quyền truy cập.");
             req.getRequestDispatcher("view/msg/msgLogin.jsp").forward(req, resp);
         }
     }
@@ -78,12 +91,19 @@ public abstract class BaseRequiredAuthorizationController extends BaseRequiredAu
      */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp, User user) throws ServletException, IOException {
-        if (isAuthorized(req, user)) { // Kiểm tra Vòng 2
-            // Nếu có quyền, gọi hàm processGet của lớp Con để xử lý nghiệp vụ
-            processGet(req, resp, user);
-        } else {
-            // Nếu không có quyền, báo lỗi và chuyển đến trang báo lỗi (8 giây)
-            req.setAttribute("errorLoginMsg", "Access Denied! You do not have permission to access this page.");
+        try {
+            if (isAuthorized(req, user)) { // Kiểm tra Vòng 2
+                // Nếu có quyền, gọi hàm processGet của lớp Con để xử lý nghiệp vụ
+                processGet(req, resp, user);
+            } else {
+                // Nếu không có quyền, báo lỗi và chuyển đến trang báo lỗi (8 giây)
+                req.setAttribute("errorLoginMsg", "Access Denied! You do not have permission to access this page.");
+                req.getRequestDispatcher("view/msg/msgLogin.jsp").forward(req, resp);
+            }
+        } catch (SQLException ex) {
+            //RoleDBContext.getByUserId() fail
+            Logger.getLogger(BaseRequiredAuthorizationController.class.getName()).log(Level.SEVERE, null, ex);
+            req.setAttribute("errorLoginMsg", "Lỗi DB khi kiểm tra quyền truy cập.");
             req.getRequestDispatcher("view/msg/msgLogin.jsp").forward(req, resp);
         }
     }

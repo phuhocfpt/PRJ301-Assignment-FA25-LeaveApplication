@@ -32,13 +32,13 @@ public class RequestForLeaveDBContext extends DBContext {
                                                 ?,
                                                 ?,
                                                 ?,
-                                                ?""";
+                                                ?)""";
 
         PreparedStatement stm = null;
         ResultSet rs = null;
         try {
             //Return generate ... => const variable => return về id của cái vừa được tạo, dùng ở dưới
-            stm = connection.prepareStatement(sql_create_rfl, Statement.RETURN_GENERATED_KEYS);
+            stm = connection.prepareStatement(sql_create_rfl, Statement.RETURN_GENERATED_KEYS); //(1)
 
             //setString (?)
             //biến request kiểu dl class RFL truyền vào
@@ -67,6 +67,20 @@ public class RequestForLeaveDBContext extends DBContext {
                 //nếu người dùng k nhập các lí do có sẵn thì => Chèn NULL vào db
                 stm.setNull(6, java.sql.Types.NVARCHAR); // lệnh chèn null (cột có nhận NULL)
             }
+
+            //có thông tin => chạy lệnh insert
+            stm.executeUpdate();
+
+            //Lấy id(reqid) vừa tạo
+            rs = stm.getGeneratedKeys(); //(2)
+            if (rs.next()) {
+                /*
+                Câu lệnh (1) sẽ lấy id vừa đc tạo ra sau khi câu lệnh insert thực hiện
+                Câu lệnh (2) ở trên thì nó sẽ nhận giá trị int int ở cột đầu (reqid)
+                 */
+                return rs.getInt(1); //1 này là cột thứ 1 (reqid)
+            }
+
         } catch (SQLException ex) {
             Logger.getLogger(RequestForLeaveDBContext.class.getName()).log(Level.SEVERE, null, ex);
             throw ex; //ném lỗi cho controller 
@@ -82,5 +96,4 @@ public class RequestForLeaveDBContext extends DBContext {
         return -1; //fail
     }
 
-    //Tính năng tạo đơn
 }
