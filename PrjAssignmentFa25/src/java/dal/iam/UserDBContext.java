@@ -22,7 +22,9 @@ public class UserDBContext extends DBContext {
     public User get(String username, String password) throws SQLException {
         PreparedStatement stm = null;
         ResultSet rs = null;
+        Connection connection = null;
         try {
+            connection = getConnection();
             String sql = """
                      SELECT
                          u.uid,
@@ -80,7 +82,7 @@ public class UserDBContext extends DBContext {
             if (stm != null) {
                 stm.close();
             }
-            closeConnection();
+            closeConnection(connection);
         }
         return null; //nếu không đúng thông tin hoặc không thỏa mãn đăng nhập(active = 0, ..) thì sẽ return về null
     }

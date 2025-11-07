@@ -21,8 +21,9 @@ public class ReasonTypeDBContext extends DBContext {
         ArrayList<ReasonType> reasons = new ArrayList<>();
         PreparedStatement stm = null;
         ResultSet rs = null;
+        Connection connection = null;
         try {
-
+            connection = getConnection();
             String sql_reasons = """
                                          SELECT rtid
                                                ,rcode
@@ -56,7 +57,7 @@ public class ReasonTypeDBContext extends DBContext {
                 stm.close();
             }
 
-            closeConnection();
+            closeConnection(connection);
         }
 
         return reasons;

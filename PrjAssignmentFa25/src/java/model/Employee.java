@@ -10,7 +10,6 @@ import java.sql.*;
  *
  * @author phuga
  */
-
 // Sang bên class Department đọc
 public class Employee extends BaseModel {
 
@@ -21,11 +20,12 @@ public class Employee extends BaseModel {
     private Department department;
     private String email;
     private boolean egender;
+    private Integer managerId;
 
     public Employee() {
     }
 
-    public Employee(String name, Date dob, String address, String phone, Department department, String email, boolean egender) {
+    public Employee(String name, Date dob, String address, String phone, Department department, String email, boolean egender, Integer managerId) {
         this.name = name;
         this.dob = dob;
         this.address = address;
@@ -33,9 +33,10 @@ public class Employee extends BaseModel {
         this.department = department;
         this.email = email;
         this.egender = egender;
+        this.managerId = managerId;
     }
 
-    public Employee(String name, Date dob, String address, String phone, Department department, String email, boolean egender, int id) {
+    public Employee(String name, Date dob, String address, String phone, Department department, String email, boolean egender, Integer managerId, int id) {
         super(id);
         this.name = name;
         this.dob = dob;
@@ -44,6 +45,7 @@ public class Employee extends BaseModel {
         this.department = department;
         this.email = email;
         this.egender = egender;
+        this.managerId = managerId;
     }
 
     public String getName() {
@@ -100,6 +102,14 @@ public class Employee extends BaseModel {
 
     public void setEgender(boolean egender) {
         this.egender = egender;
+    }
+
+    public Integer getManagerId() {
+        return managerId;
+    }
+
+    public void setManagerId(Integer managerId) {
+        this.managerId = managerId;
     }
 
 }

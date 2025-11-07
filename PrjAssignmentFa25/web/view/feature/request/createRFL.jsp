@@ -66,18 +66,18 @@
                     <div class="form-grid">
 
                         <%-- Cột 1 --%>
-                    <div class="form-group">
-                        <label for="fromdate">Từ Ngày:</label>
-                        <%-- SỬA LỖI: Đổi type="date" thành type="text" và thêm placeholder --%>
-                        <input type="text" id="fromdate" name="fromdate" placeholder="dd/MM/yyyy" required>
-                    </div>
-                    
-                    <%-- Cột 2 --%>
-                    <div class="form-group">
-                        <label for="todate">Đến Ngày:</label>
-                        <%-- SỬA LỖI: Đổi type="date" thành type="text" và thêm placeholder --%>
-                        <input type="text" id="todate" name="todate" placeholder="dd/MM/yyyy" required>
-                    </div>
+                        <div class="form-group">
+                            <label for="fromdate">Từ Ngày:</label>
+                            <%-- SỬA LỖI: Đổi type="date" thành type="text" và thêm placeholder --%>
+                            <input type="text" id="fromdate" name="fromdate" placeholder="dd/MM/yyyy" required>
+                        </div>
+
+                        <%-- Cột 2 --%>
+                        <div class="form-group">
+                            <label for="todate">Đến Ngày:</label>
+                            <%-- SỬA LỖI: Đổi type="date" thành type="text" và thêm placeholder --%>
+                            <input type="text" id="todate" name="todate" placeholder="dd/MM/yyyy" required>
+                        </div>
 
                         <%-- Hàng 2 (Full cột) --%>
                         <div class="form-group form-group-full">
@@ -93,7 +93,8 @@
                                         Quan trọng: Thêm 'data-requires-details'
                                         để JavaScript biết khi nào cần hiện ô chi tiết
                                     --%>
-                                    <option value="${reason.id}" data-requires-details="${reason.reasonOthers}">
+                                    <option value="${reason.id}" 
+                                            data-requires-details="${reason.reasonOthers ? 'true' : 'false'}">
                                         ${reason.rname}
                                     </option>
                                 </c:forEach>

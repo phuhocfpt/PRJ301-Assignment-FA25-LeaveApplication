@@ -22,8 +22,9 @@ public class RoleDBContext extends DBContext {
         ArrayList<Role> roles = new ArrayList<>();
         PreparedStatement stm = null;
         ResultSet rs = null;
+        Connection connection = null;
         try {
-
+            connection = getConnection();
             // Lấy tất cả Role và Feature của 1 User
             String sql_roleAndFeatureOfAUser = """
                          SELECT r.rid, r.rname, r.rcode, r.rlevel, f.fid, f.url
@@ -93,7 +94,7 @@ vd: đầu vào a2, uid = 1, rid = 5(EMP)
             if(stm != null){
                 stm.close();
             }
-            closeConnection();
+            closeConnection(connection);
         }
 
         return roles;

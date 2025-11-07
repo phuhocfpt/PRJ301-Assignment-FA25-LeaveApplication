@@ -40,7 +40,9 @@ public class RequestForLeaveDBContext extends DBContext {
 
         PreparedStatement stm = null;
         ResultSet rs = null;
+        Connection connection = null;
         try {
+            connection = getConnection();
             //Return generate ... => const variable => return về id của cái vừa được tạo, dùng ở dưới
             stm = connection.prepareStatement(sql_create_rfl, Statement.RETURN_GENERATED_KEYS); //(1)
 
@@ -95,7 +97,7 @@ public class RequestForLeaveDBContext extends DBContext {
             if (stm != null) {
                 stm.close();
             }
-            closeConnection();
+            closeConnection(connection);
         }
         return -1; //fail
     }
@@ -105,42 +107,55 @@ public class RequestForLeaveDBContext extends DBContext {
     private RequestForLeave enDataToRFL(ResultSet rs) throws SQLException {
         RequestForLeave rfl = new RequestForLeave();
 
-        //i4 của 1 đơn rfl
+        // i4 đơn (request for leave)
         rfl.setId(rs.getInt("reqid"));
         rfl.setFromDate(rs.getDate("from"));
         rfl.setToDate(rs.getDate("to"));
         rfl.setStatus(rs.getInt("status"));
         rfl.setCreatedTime(rs.getTimestamp("created_time"));
-        rfl.setReasonOthers(rs.getString("reason_others"));
+        rfl.setReasonOthers(rs.getNString("reason_others"));
         rfl.setProcessedTime(rs.getTimestamp("processed_time"));
-        rfl.setDecisionNote(rs.getString("decision_note"));
+        rfl.setDecisionNote(rs.getNString("decision_note"));
 
-        //i4 emp create
-        Employee creator = new Employee();
-        creator.setId(rs.getInt("created_by_eid"));
-        creator.setName(rs.getNString("created_by_name"));
-        rfl.setCreatedBy(creator);
-
-        //i4 người duyệt (emp) - may null
-        int processedByEId = rs.getInt("processed_by_eid");
-        if (!rs.wasNull()) { //check null, không null thì gán id đó luôn
-            Employee processor = new Employee();
-            processor.setId(processedByEId);
-            processor.setName(rs.getNString("processed_by_name"));
-            rfl.setProcessedBy(processor);
-        }
-
-        //i4 reasonType
+        // reason type
         ReasonType rt = new ReasonType();
         rt.setId(rs.getInt("rtid"));
         rt.setRname(rs.getNString("reason_name"));
         rfl.setReasonType(rt);
 
-        //i4 department
-        Department depts = new Department();
-        depts.setId(rs.getInt("did"));
-        depts.setDname(rs.getString("dept_name"));
-        rfl.setDepartment(depts);
+        //request's department
+        Department reqDept = new Department();
+        reqDept.setId(rs.getInt("did"));
+        reqDept.setDname(rs.getString("dept_name")); // nếu cột là NVARCHAR thì dùng getNString
+        rfl.setDepartment(reqDept);
+        
+        // emp create leave
+        Employee creator = new Employee();
+        creator.setId(rs.getInt("created_by_eid"));
+        creator.setName(rs.getNString("created_by_name"));
+
+        // department of employee created leave
+        Department creatorDept = new Department();
+        creatorDept.setId(rs.getInt("created_by_did"));
+        creatorDept.setDname(rs.getString("created_by_dept_name")); // nếu có
+        creator.setDepartment(creatorDept);
+        creator.setManagerId(rs.getObject("created_by_ManagerID") != null ? rs.getInt("created_by_ManagerID") : null);
+        rfl.setCreatedBy(creator);
+
+        // PROCESSOR =======
+        // processed_by (lấy tên)
+        if (rs.getObject("processed_by_eid") != null) {
+            Employee processor = new Employee();
+            processor.setId(rs.getInt("processed_by_eid"));
+            processor.setName(rs.getNString("processed_by_name"));
+
+            Department processorDept = new Department();
+            processorDept.setId(rs.getInt("processed_by_did"));
+            processorDept.setDname(rs.getNString("processed_by_dept_name"));
+            processor.setDepartment(processorDept);
+            processor.setManagerId(rs.getObject("processed_by_ManagerID") != null ? rs.getInt("processed_by_ManagerID") : null);
+            rfl.setProcessedBy(processor);
+        }
 
         return rfl;
     }
@@ -151,39 +166,46 @@ public class RequestForLeaveDBContext extends DBContext {
 
         PreparedStatement stm = null;
         ResultSet rs = null;
-
+        Connection connection = null;
         String sql_list_Emp = """
-                              SELECT r.reqid
-                                        ,r.created_by
-                                        ,r.created_time
-                                        ,r.processed_by
-                                        ,r.[from]
-                                        ,r.[to]
-                                        ,r.[status]
-                                        ,r.did
-                                        ,r.rtid
-                                        ,r.reason_others
-                                        ,r.processed_time
-                                        ,r.decision_note
-                                  	  ,e_creator.eid AS created_by_eid
-                                  	  ,e_creator.ename AS created_by_name
-                                  	  ,e_processor.eid AS processed_by_eid
-                                  	  ,e_processor.ename AS processed_by_name
-                                  	  ,rt.rname AS reason_name
-                                  	  ,d.dname AS dept_name
-                                  
-                                    FROM RequestForLeave r
-                                    INNER JOIN Employee e_creator ON r.created_by = e_creator.eid
-                                    LEFT JOIN Employee e_processor ON r.processed_by = e_processor.eid
-                                    INNER JOIN ReasonType rt ON r.rtid = rt.rtid
-                                    INNER JOIN Department d ON r.did = d.did
-                                    WHERE r.created_by = ?
-                                    ORDER BY r.reqid DESC
-                                        OFFSET (?-1)*? ROWS
-                                        FETCH NEXT ? ROWS ONLY;
-                              """;
+                          SELECT
+                              r.reqid,
+                              r.did,
+                              d.dname AS dept_name,
+                              r.created_time,
+                              e_creator.eid AS created_by_eid,
+                              e_creator.ename AS created_by_name,
+                              e_creator.did AS created_by_did,
+                              creator_dept.dname AS created_by_dept_name,
+                              e_creator.ManagerID AS created_by_ManagerID,
+                              r.[from],
+                              r.[to],
+                              r.rtid,
+                              rt.rname AS reason_name,
+                              r.reason_others,
+                              r.status,
+                              e_processor.eid AS processed_by_eid,
+                              e_processor.ename AS processed_by_name,
+                              e_processor.did AS processed_by_did,
+                              processor_dept.dname AS processed_by_dept_name,
+                              e_processor.ManagerID AS processed_by_ManagerID,
+                              r.processed_time,
+                              r.decision_note
+                          FROM RequestForLeave r
+                          INNER JOIN Employee e_creator ON r.created_by = e_creator.eid
+                          LEFT JOIN Employee e_processor ON r.processed_by = e_processor.eid
+                          INNER JOIN ReasonType rt ON r.rtid = rt.rtid
+                          INNER JOIN Department d ON r.did = d.did
+                          LEFT JOIN Department creator_dept ON e_creator.did = creator_dept.did
+                          LEFT JOIN Department processor_dept ON e_processor.did = processor_dept.did
+                          WHERE r.created_by = ?
+                          ORDER BY r.reqid DESC
+                          OFFSET (? - 1) * ? ROWS
+                          FETCH NEXT ? ROWS ONLY;
+                          """;
 
         try {
+            connection = getConnection();
             stm = connection.prepareStatement(sql_list_Emp);
             stm.setInt(1, eid);
             stm.setInt(2, pageindex);
@@ -206,7 +228,7 @@ public class RequestForLeaveDBContext extends DBContext {
             if (stm != null) {
                 stm.close();
             }
-            closeConnection();
+            closeConnection(connection);
         }
         return listRFL;
     }
@@ -218,39 +240,46 @@ public class RequestForLeaveDBContext extends DBContext {
 
         PreparedStatement stm = null;
         ResultSet rs = null;
-
+        Connection connection = null;
         String sql_list_depts = """
-                              SELECT r.reqid
-                                        ,r.created_by
-                                        ,r.created_time
-                                        ,r.processed_by
-                                        ,r.[from]
-                                        ,r.[to]
-                                        ,r.[status]
-                                        ,r.did
-                                        ,r.rtid
-                                        ,r.reason_others
-                                        ,r.processed_time
-                                        ,r.decision_note
-                                  	  ,e_creator.eid AS created_by_eid
-                                  	  ,e_creator.ename AS created_by_name
-                                  	  ,e_processor.eid AS processed_by_eid
-                                  	  ,e_processor.ename AS processed_by_name
-                                  	  ,rt.rname AS reason_name
-                                  	  ,d.dname AS dept_name
-                                  
-                                    FROM RequestForLeave r
-                                    INNER JOIN Employee e_creator ON r.created_by = e_creator.eid
-                                    LEFT JOIN Employee e_processor ON r.processed_by = e_processor.eid
-                                    INNER JOIN ReasonType rt ON r.rtid = rt.rtid
-                                    INNER JOIN Department d ON r.did = d.did
-                                    WHERE r.did = ?
-                                    ORDER BY r.reqid DESC
-                                      OFFSET (?-1)*? ROWS
-                                      FETCH NEXT ? ROWS ONLY;
-                                """;
+                          SELECT
+                              r.reqid,
+                              r.did,
+                              d.dname AS dept_name,
+                              r.created_time,
+                              e_creator.eid AS created_by_eid,
+                              e_creator.ename AS created_by_name,
+                              e_creator.did AS created_by_did,
+                              creator_dept.dname AS created_by_dept_name,
+                              e_creator.ManagerID AS created_by_ManagerID,
+                              r.[from],
+                              r.[to],
+                              r.rtid,
+                              rt.rname AS reason_name,
+                              r.reason_others,
+                              r.status,
+                              e_processor.eid AS processed_by_eid,
+                              e_processor.ename AS processed_by_name,
+                              e_processor.did AS processed_by_did,
+                              processor_dept.dname AS processed_by_dept_name,
+                              e_processor.ManagerID AS processed_by_ManagerID,
+                              r.processed_time,
+                              r.decision_note
+                          FROM RequestForLeave r
+                          INNER JOIN Employee e_creator ON r.created_by = e_creator.eid
+                          LEFT JOIN Employee e_processor ON r.processed_by = e_processor.eid
+                          INNER JOIN ReasonType rt ON r.rtid = rt.rtid
+                          INNER JOIN Department d ON r.did = d.did
+                          LEFT JOIN Department creator_dept ON e_creator.did = creator_dept.did
+                          LEFT JOIN Department processor_dept ON e_processor.did = processor_dept.did
+                          WHERE r.did = ?
+                          ORDER BY r.reqid DESC
+                          OFFSET (? - 1) * ? ROWS
+                          FETCH NEXT ? ROWS ONLY;
+                          """;
 
         try {
+            connection = getConnection();
             stm = connection.prepareStatement(sql_list_depts);
             stm.setInt(1, did);
             stm.setInt(2, pageindex);
@@ -273,7 +302,7 @@ public class RequestForLeaveDBContext extends DBContext {
             if (stm != null) {
                 stm.close();
             }
-            closeConnection();
+            closeConnection(connection);
         }
         return listRFL;
     }
@@ -282,7 +311,9 @@ public class RequestForLeaveDBContext extends DBContext {
     public int countListRflByEmpId(int eid) throws SQLException {
         PreparedStatement stm = null;
         ResultSet rs = null;
+        Connection connection = null;
         try {
+            connection = getConnection();
             String sql = "SELECT COUNT(*) as Total FROM [RequestForLeave] WHERE created_by = ?";
             stm = connection.prepareStatement(sql);
             stm.setInt(1, eid);
@@ -300,7 +331,7 @@ public class RequestForLeaveDBContext extends DBContext {
             if (stm != null) {
                 stm.close();
             }
-            closeConnection();
+            closeConnection(connection);
         }
         return 0;
     }
@@ -309,7 +340,9 @@ public class RequestForLeaveDBContext extends DBContext {
     public int countByDepartmentId(int did) throws SQLException {
         PreparedStatement stm = null;
         ResultSet rs = null;
+        Connection connection = null;
         try {
+            connection = getConnection();
             String sql = "SELECT COUNT(*) as Total FROM [RequestForLeave] WHERE did = ?";
             stm = connection.prepareStatement(sql);
             stm.setInt(1, did);
@@ -327,9 +360,80 @@ public class RequestForLeaveDBContext extends DBContext {
             if (stm != null) {
                 stm.close();
             }
-            closeConnection();
+            closeConnection(connection);
         }
         return 0;
     }
+    
+    //==== Bổ sung thêm tính năng view all cho Manager =====
+    public ArrayList<RequestForLeave> listByManagerId(int managerEid, int pageindex, int pagesize) throws SQLException {
+    ArrayList<RequestForLeave> listRFL = new ArrayList<>();
+    String sql = """
+        SELECT
+            r.reqid,
+            r.did,
+            d.dname AS dept_name,
+            r.created_time,
+            e_creator.eid AS created_by_eid,
+            e_creator.ename AS created_by_name,
+            e_creator.did AS created_by_did,
+            creator_dept.dname AS created_by_dept_name,
+            e_creator.ManagerID AS created_by_ManagerID,
+            r.[from],
+            r.[to],
+            r.rtid,
+            rt.rname AS reason_name,
+            r.reason_others,
+            r.status,
+            e_processor.eid AS processed_by_eid,
+            e_processor.ename AS processed_by_name,
+            e_processor.did AS processed_by_did,
+            processor_dept.dname AS processed_by_dept_name,
+            e_processor.ManagerID AS processed_by_ManagerID,
+            r.processed_time,
+            r.decision_note
+        FROM RequestForLeave r
+        INNER JOIN Employee e_creator ON r.created_by = e_creator.eid
+        LEFT JOIN Employee e_processor ON r.processed_by = e_processor.eid
+        INNER JOIN ReasonType rt ON r.rtid = rt.rtid
+        INNER JOIN Department d ON r.did = d.did
+        LEFT JOIN Department creator_dept ON e_creator.did = creator_dept.did
+        LEFT JOIN Department processor_dept ON e_processor.did = processor_dept.did
+        WHERE e_creator.ManagerID = ?
+        ORDER BY r.reqid DESC
+        OFFSET (? - 1) * ? ROWS
+        FETCH NEXT ? ROWS ONLY;
+    """;
+    try (Connection con = getConnection();
+         PreparedStatement stm = con.prepareStatement(sql)) {
+        stm.setInt(1, managerEid);
+        stm.setInt(2, pageindex);
+        stm.setInt(3, pagesize);
+        stm.setInt(4, pagesize);
+        try (ResultSet rs = stm.executeQuery()) {
+            while (rs.next()) {
+                listRFL.add(enDataToRFL(rs));
+            }
+        }
+    }
+    return listRFL;
+}
+
+public int countByManagerId(int managerEid) throws SQLException {
+    String sql = """
+        SELECT COUNT(*) AS Total
+        FROM RequestForLeave r
+        INNER JOIN Employee e_creator ON r.created_by = e_creator.eid
+        WHERE e_creator.ManagerID = ?
+    """;
+    try (Connection con = getConnection();
+         PreparedStatement stm = con.prepareStatement(sql)) {
+        stm.setInt(1, managerEid);
+        try (ResultSet rs = stm.executeQuery()) {
+            if (rs.next()) return rs.getInt("Total");
+        }
+    }
+    return 0;
+}
 
 }

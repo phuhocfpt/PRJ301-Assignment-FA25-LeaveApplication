@@ -14,53 +14,51 @@ import java.util.logging.Logger;
  *
  * @author phuga
  */
-
 //Không để là DBContext<T extends BaseModel> vì những DAO khác mà không
 //extends với BaseModel sẽ không hoạt động được và chỉ hoạt động với
 //những class model extends BaseModel
 //Vì vậy những method list, delete ... sẽ được khai báo ở những class cần dùng
-public abstract class DBContext{
-    protected Connection connection;
+public abstract class DBContext {
 
-    public DBContext() {
+    protected Connection getConnection() {
         try {
             String user = "sa";
             String pass = "123";
             String url = "jdbc:sqlserver://localhost:1433;databaseName=PRJ301Assignment;encrypt=true;trustServerCertificate=true;";
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            connection = DriverManager.getConnection(url, user, pass);
+            return DriverManager.getConnection(url, user, pass);
         } catch (ClassNotFoundException | SQLException ex) { //lỗi không inport file jar jdbc
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
             throw new RuntimeException("Không thể kết nối CSDL", ex);
         }
         //nổ lỗi
-        
+
     }
 
-    public void closeConnection() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
+    protected void closeConnection(Connection connection) {
+        if (connection != null) {
+            try {
+                if (!connection.isClosed()) {
+                    connection.close();
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
-    
+
     //Update thêm
-    
-    protected void beginTransaction() throws SQLException // (1)
+    protected void beginTransaction(Connection connection) throws SQLException // (1)
     {
         connection.setAutoCommit(false);
     }
-    
-    protected void commitTransaction() throws SQLException // (2)
+
+    protected void commitTransaction(Connection connection) throws SQLException // (2)
     {
         connection.commit();
     }
-    
-    protected void rollbackTransaction() // (3)
+
+    protected void rollbackTransaction(Connection connection) // (3)
     {
         try {
             connection.rollback();
@@ -68,8 +66,8 @@ public abstract class DBContext{
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    protected void resetTransactionMode() // (4)
+
+    protected void resetTransactionMode(Connection connection) // (4)
     {
         try {
             connection.setAutoCommit(true);
@@ -77,7 +75,7 @@ public abstract class DBContext{
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     // Các tính năng như sau:
     /*
     (1): Giai đoạn đầu mình sẽ cho commit = true để đưa dữ liệu qua
@@ -87,6 +85,5 @@ public abstract class DBContext{
     
     **** NOTE: MÌNH SẼ GỌI CÁI NÀY TRONG CÁC CLASS EXTENDS DBContext này thay vì phải viết
                 dài dòng và try catch CRUD
-    */
-   
+     */
 }
