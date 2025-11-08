@@ -832,4 +832,126 @@ public class RequestForLeaveDBContext extends DBContext {
         }
     }
 
+    // =================== Agenda ===============
+    /**
+     * List của 1 manager
+     *
+     * @param managerEid
+     * @return
+     * @throws java.sql.SQLException
+     */
+    public ArrayList<model.Employee> listTeamByManager(int managerEid) throws SQLException {
+        String sql = """
+        SELECT e.eid, e.ename
+        FROM Employee e
+        WHERE e.ManagerID = ?
+        ORDER BY e.ename
+    """;
+        ArrayList<model.Employee> list = new ArrayList<>();
+        try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql)) {
+            stm.setInt(1, managerEid);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    model.Employee e = new model.Employee();
+                    e.setId(rs.getInt("eid"));
+                    e.setName(rs.getNString("ename"));
+                    list.add(e);
+                }
+            }
+        }
+        return list;
+    }
+
+    public static class LeaveSpan {
+
+        public int eid;
+        public java.sql.Date from;
+        public java.sql.Date to;
+    }
+
+    public ArrayList<LeaveSpan> listApprovedSpansOfTeam(int managerEid, java.sql.Date from, java.sql.Date to) throws SQLException {
+        String sql = """
+        SELECT r.created_by AS eid, r.[from], r.[to]
+        FROM RequestForLeave r
+        INNER JOIN Employee e ON e.eid = r.created_by
+        WHERE e.ManagerID = ?
+          AND r.status = 1
+          AND r.[to]   >= ? 
+          AND r.[from] <= ?
+        ORDER BY r.created_by, r.[from]
+    """;
+        ArrayList<LeaveSpan> list = new ArrayList<>();
+        try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql)) {
+            stm.setInt(1, managerEid);
+            stm.setDate(2, from);
+            stm.setDate(3, to);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    LeaveSpan s = new LeaveSpan();
+                    s.eid = rs.getInt("eid");
+                    s.from = rs.getDate("from");
+                    s.to = rs.getDate("to");
+                    list.add(s);
+                }
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Admin mode: xem hết
+     * @return 
+     * @throws java.sql.SQLException
+     */
+    public ArrayList<model.Employee> listAllEmployees() throws SQLException {
+        String sql = """
+                SELECT e.eid, e.ename
+                FROM Employee e
+                ORDER BY e.ename
+            """;
+        ArrayList<model.Employee> list = new ArrayList<>();
+        try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql)) {
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    model.Employee e = new model.Employee();
+                    e.setId(rs.getInt("eid"));
+                    e.setName(rs.getNString("ename"));
+                    list.add(e);
+                }
+            }
+        }
+        return list;
+    }
+
+    /**
+     * @param from
+     * @param to
+     * @return 
+     * @throws java.sql.SQLException
+     */
+    public ArrayList<LeaveSpan> listApprovedSpansOfAll(java.sql.Date from, java.sql.Date to) throws SQLException {
+        String sql = """
+                SELECT r.created_by AS eid, r.[from], r.[to]
+                FROM RequestForLeave r
+                WHERE r.status = 1
+                  AND r.[to]   >= ?  /* Giao với khoảng */
+                  AND r.[from] <= ?
+                ORDER BY r.created_by, r.[from]
+            """;
+        ArrayList<LeaveSpan> list = new ArrayList<>();
+        try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql)) {
+            stm.setDate(1, from);
+            stm.setDate(2, to);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    LeaveSpan s = new LeaveSpan();
+                    s.eid = rs.getInt("eid");
+                    s.from = rs.getDate("from");
+                    s.to = rs.getDate("to");
+                    list.add(s);
+                }
+            }
+        }
+        return list;
+    }
 }
