@@ -39,11 +39,13 @@ public class RequestHistoryController extends BaseRequiredAuthorizationControlle
 
         try {
             RequestForLeaveDBContext dao = new RequestForLeaveDBContext();
-            RequestForLeave r = dao.getDetailBasic(reqid); //in info cơ bản(trừ id)
-            ArrayList<RequestForLeaveDBContext.StatusHistoryRow> historyLists = dao.getStatusHistory(reqid);
+            RequestForLeave r = dao.getDetailBasic(reqid); 
+            ArrayList<java.util.Map<String, Object>> historyLists = dao.getStatusHistoryMap(reqid); // <— đổi sang Map
+
 
             req.setAttribute("r", r);
             req.setAttribute("historyLists", historyLists);
+            req.setAttribute("reqid", reqid);
 
             req.getRequestDispatcher("/view/feature/request/historyRFL.jsp").forward(req, resp);
 

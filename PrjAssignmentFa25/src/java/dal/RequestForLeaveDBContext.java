@@ -492,41 +492,32 @@ public class RequestForLeaveDBContext extends DBContext {
         }
     }
 
-// Lịch sử trạng thái
-    public static class StatusHistoryRow {
-
-        public int newStatus;
-        public Timestamp changedAt;
-        public String note;
-        public Integer changedByEid;
-        public String changedByName;
-    }
-
-    public ArrayList<StatusHistoryRow> getStatusHistory(int reqid) throws SQLException {
+    public ArrayList<java.util.Map<String, Object>> getStatusHistoryMap(int reqid) throws SQLException {
         String sql = """
         SELECT h.new_status, h.changed_at, h.note,
                h.changed_by_eid, e.ename AS changed_by_name
         FROM LeaveStatusHistory h
         LEFT JOIN Employee e ON e.eid = h.changed_by_eid
         WHERE h.reqid = ?
-        ORDER BY h.changed_at DESC""";
-        ArrayList<StatusHistoryRow> list = new ArrayList<>();
+        ORDER BY h.changed_at DESC
+    """;
+        ArrayList<java.util.Map<String, Object>> list = new ArrayList<>();
         try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql)) {
             stm.setInt(1, reqid);
             try (ResultSet rs = stm.executeQuery()) {
                 while (rs.next()) {
-                    StatusHistoryRow row = new StatusHistoryRow();
-                    row.newStatus = rs.getInt("new_status");
-                    row.changedAt = rs.getTimestamp("changed_at");
-                    row.note = rs.getNString("note");
-                    row.changedByEid = (Integer) rs.getObject("changed_by_eid");
-                    row.changedByName = rs.getNString("changed_by_name");
+                    java.util.Map<String, Object> row = new java.util.HashMap<>();
+                    // đặt key “camelCase” cho dễ đọc bên JSP
+                    row.put("newStatus", rs.getInt("new_status"));
+                    row.put("changedAt", rs.getTimestamp("changed_at"));
+                    row.put("note", rs.getNString("note"));
+                    row.put("changedByEid", (Integer) rs.getObject("changed_by_eid"));
+                    row.put("changedByName", rs.getNString("changed_by_name"));
                     list.add(row);
                 }
             }
         }
         return list;
-
     }
 
     //list all - dùng cho Admin
@@ -589,4 +580,256 @@ public class RequestForLeaveDBContext extends DBContext {
         }
         return 0;
     }
+
+// ==== INBOX PENDING ====
+// Admin xem tất cả pending
+    public ArrayList<RequestForLeave> listPendingAll(int pageindex, int pagesize) throws SQLException {
+        ArrayList<RequestForLeave> list = new ArrayList<>();
+        String sql = """
+        SELECT
+            r.reqid, r.did, d.dname AS dept_name,
+            r.created_time,
+            e_creator.eid AS created_by_eid, e_creator.ename AS created_by_name,
+            e_creator.did AS created_by_did, creator_dept.dname AS created_by_dept_name,
+            e_creator.ManagerID AS created_by_ManagerID,
+            r.[from], r.[to], r.rtid, rt.rname AS reason_name,
+            r.reason_others, r.status,
+            e_processor.eid AS processed_by_eid, e_processor.ename AS processed_by_name,
+            e_processor.did AS processed_by_did, processor_dept.dname AS processed_by_dept_name,
+            e_processor.ManagerID AS processed_by_ManagerID,
+            r.processed_time, r.decision_note
+        FROM RequestForLeave r
+        INNER JOIN Employee e_creator ON r.created_by = e_creator.eid
+        LEFT JOIN Employee e_processor ON r.processed_by = e_processor.eid
+        INNER JOIN ReasonType rt ON r.rtid = rt.rtid
+        INNER JOIN Department d ON r.did = d.did
+        LEFT JOIN Department creator_dept ON e_creator.did = creator_dept.did
+        LEFT JOIN Department processor_dept ON e_processor.did = processor_dept.did
+        WHERE r.status = 0
+        ORDER BY r.reqid DESC
+        OFFSET (? - 1) * ? ROWS FETCH NEXT ? ROWS ONLY;
+    """;
+        try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql)) {
+            stm.setInt(1, pageindex);
+            stm.setInt(2, pagesize);
+            stm.setInt(3, pagesize);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    list.add(enDataToRFL(rs));
+                }
+            }
+        }
+        return list;
+    }
+
+    public int countPendingAll() throws SQLException {
+        String sql = "SELECT COUNT(*) AS Total FROM RequestForLeave WHERE status = 0";
+        try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql); ResultSet rs = stm.executeQuery()) {
+            return rs.next() ? rs.getInt("Total") : 0;
+        }
+    }
+
+// Manager xem pending của cấp dưới trực tiếp
+    public ArrayList<RequestForLeave> listPendingByManager(int managerEid, int pageindex, int pagesize) throws SQLException {
+        ArrayList<RequestForLeave> list = new ArrayList<>();
+        String sql = """
+        SELECT
+            r.reqid, r.did, d.dname AS dept_name,
+            r.created_time,
+            e_creator.eid AS created_by_eid, e_creator.ename AS created_by_name,
+            e_creator.did AS created_by_did, creator_dept.dname AS created_by_dept_name,
+            e_creator.ManagerID AS created_by_ManagerID,
+            r.[from], r.[to], r.rtid, rt.rname AS reason_name,
+            r.reason_others, r.status,
+            e_processor.eid AS processed_by_eid, e_processor.ename AS processed_by_name,
+            e_processor.did AS processed_by_did, processor_dept.dname AS processed_by_dept_name,
+            e_processor.ManagerID AS processed_by_ManagerID,
+            r.processed_time, r.decision_note
+        FROM RequestForLeave r
+        INNER JOIN Employee e_creator ON r.created_by = e_creator.eid
+        LEFT JOIN Employee e_processor ON r.processed_by = e_processor.eid
+        INNER JOIN ReasonType rt ON r.rtid = rt.rtid
+        INNER JOIN Department d ON r.did = d.did
+        LEFT JOIN Department creator_dept ON e_creator.did = creator_dept.did
+        LEFT JOIN Department processor_dept ON e_processor.did = processor_dept.did
+        WHERE r.status = 0 AND e_creator.ManagerID = ?
+        ORDER BY r.reqid DESC
+        OFFSET (? - 1) * ? ROWS FETCH NEXT ? ROWS ONLY;
+    """;
+        try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql)) {
+            stm.setInt(1, managerEid);
+            stm.setInt(2, pageindex);
+            stm.setInt(3, pagesize);
+            stm.setInt(4, pagesize);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    list.add(enDataToRFL(rs));
+                }
+            }
+        }
+        return list;
+    }
+
+    public int countPendingByManager(int managerEid) throws SQLException {
+        String sql = """
+        SELECT COUNT(*) AS Total
+        FROM RequestForLeave r
+        INNER JOIN Employee e ON r.created_by = e.eid
+        WHERE r.status = 0 AND e.ManagerID = ?
+    """;
+        try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql)) {
+            stm.setInt(1, managerEid);
+            try (ResultSet rs = stm.executeQuery()) {
+                return rs.next() ? rs.getInt("Total") : 0;
+            }
+        }
+    }
+
+    // newStatus: 1 = approved, 2 = rejected
+    public void updateStatusWithHistory(int reqid, int newStatus, int processorEid, String note) throws SQLException {
+        String sqlUpdate = """
+        UPDATE RequestForLeave
+        SET status = ?, processed_by = ?, processed_time = SYSDATETIME(), decision_note = ?
+        WHERE reqid = ? AND status = 0
+    """;
+        String sqlInsertHist = """
+        INSERT INTO LeaveStatusHistory(reqid, new_status, changed_at, note, changed_by_eid)
+        VALUES(?, ?, SYSDATETIME(), ?, ?)
+    """;
+
+        Connection c = null;
+        PreparedStatement up = null, ins = null;
+        try {
+            c = getConnection();
+            c.setAutoCommit(false);
+
+            up = c.prepareStatement(sqlUpdate);
+            up.setInt(1, newStatus);
+            up.setInt(2, processorEid);
+            up.setNString(3, note);
+            up.setInt(4, reqid);
+            int affected = up.executeUpdate();
+            if (affected == 0) {
+                throw new SQLException("Đơn không ở trạng thái chờ duyệt hoặc không tồn tại.");
+            }
+
+            ins = c.prepareStatement(sqlInsertHist);
+            ins.setInt(1, reqid);
+            ins.setInt(2, newStatus);
+            ins.setNString(3, note);
+            ins.setInt(4, processorEid);
+            ins.executeUpdate();
+
+            c.commit();
+        } catch (SQLException ex) {
+            if (c != null) {
+                c.rollback();
+            }
+            throw ex;
+        } finally {
+            if (ins != null) {
+                ins.close();
+            }
+            if (up != null) {
+                up.close();
+            }
+            if (c != null) {
+                c.setAutoCommit(true);
+                c.close();
+            }
+        }
+    }
+
+    // ====== CẬP NHẬT TRẠNG THÁI (CÓ TÙY CHỌN OVERRIDE) + LỊCH SỬ ======
+    // Overload mặc định (tương thích code cũ): không cho override => chỉ khi pending
+    public boolean processRequest(int reqid, int processorEid, int newStatus, String decisionNote) throws SQLException {
+        return processRequest(reqid, processorEid, newStatus, decisionNote, false);
+    }
+
+    // Cho phép override nếu allowOverride = true (Admin/Manager),
+    // còn nếu false thì chỉ cập nhật khi status = 0.
+    // Dùng điều kiện tránh "no-op" khi override (status không đổi thì không update).
+    public boolean processRequest(int reqid, int processorEid, int newStatus, String decisionNote, boolean allowOverride) throws SQLException {
+        Connection connection = null;
+        PreparedStatement stmUpdateReq = null;
+        PreparedStatement stmInsertHistory = null;
+
+        final String SQL_UPDATE_PENDING_ONLY = """
+            UPDATE RequestForLeave
+            SET [status] = ?, [processed_by] = ?, [processed_time] = SYSDATETIME(), [decision_note] = ?
+            WHERE reqid = ? AND [status] = 0
+        """;
+
+        final String SQL_UPDATE_OVERRIDE_NOOP_SAFE = """
+            UPDATE RequestForLeave
+            SET [status] = ?, [processed_by] = ?, [processed_time] = SYSDATETIME(), [decision_note] = ?
+            WHERE reqid = ? AND [status] <> ?
+        """;
+
+        final String SQL_INSERT_HISTORY = """
+            INSERT INTO LeaveStatusHistory ([reqid],[new_status],[changed_at],[changed_by_eid],[note])
+            VALUES (?, ?, SYSDATETIME(), ?, ?)
+        """;
+
+        try {
+            connection = getConnection();
+            connection.setAutoCommit(false);
+
+            if (allowOverride) {
+                stmUpdateReq = connection.prepareStatement(SQL_UPDATE_OVERRIDE_NOOP_SAFE);
+                stmUpdateReq.setInt(1, newStatus);
+                stmUpdateReq.setInt(2, processorEid);
+                stmUpdateReq.setNString(3, decisionNote);
+                stmUpdateReq.setInt(4, reqid);
+                stmUpdateReq.setInt(5, newStatus); // tránh no-op
+            } else {
+                stmUpdateReq = connection.prepareStatement(SQL_UPDATE_PENDING_ONLY);
+                stmUpdateReq.setInt(1, newStatus);
+                stmUpdateReq.setInt(2, processorEid);
+                stmUpdateReq.setNString(3, decisionNote);
+                stmUpdateReq.setInt(4, reqid);
+            }
+
+            int rows = stmUpdateReq.executeUpdate();
+            if (rows == 0) {
+                connection.rollback();
+                return false;
+            }
+
+            stmInsertHistory = connection.prepareStatement(SQL_INSERT_HISTORY);
+            stmInsertHistory.setInt(1, reqid);
+            stmInsertHistory.setInt(2, newStatus);
+            stmInsertHistory.setInt(3, processorEid);
+            stmInsertHistory.setNString(4, decisionNote);
+            stmInsertHistory.executeUpdate();
+
+            connection.commit();
+            return true;
+        } catch (SQLException ex) {
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException ignore) {
+                }
+            }
+            throw ex;
+        } finally {
+            if (connection != null) try {
+                connection.setAutoCommit(true);
+            } catch (SQLException ignore) {
+            }
+            if (stmInsertHistory != null) try {
+                stmInsertHistory.close();
+            } catch (SQLException ignore) {
+            }
+            if (stmUpdateReq != null) try {
+                stmUpdateReq.close();
+            } catch (SQLException ignore) {
+            }
+            if (connection != null) {
+                closeConnection(connection);
+            }
+        }
+    }
+
 }
