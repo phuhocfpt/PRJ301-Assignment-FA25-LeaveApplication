@@ -128,7 +128,7 @@ public class RequestForLeaveDBContext extends DBContext {
         reqDept.setId(rs.getInt("did"));
         reqDept.setDname(rs.getString("dept_name")); // nếu cột là NVARCHAR thì dùng getNString
         rfl.setDepartment(reqDept);
-        
+
         // emp create leave
         Employee creator = new Employee();
         creator.setId(rs.getInt("created_by_eid"));
@@ -364,11 +364,11 @@ public class RequestForLeaveDBContext extends DBContext {
         }
         return 0;
     }
-    
+
     //==== Bổ sung thêm tính năng view all cho Manager =====
     public ArrayList<RequestForLeave> listByManagerId(int managerEid, int pageindex, int pagesize) throws SQLException {
-    ArrayList<RequestForLeave> listRFL = new ArrayList<>();
-    String sql = """
+        ArrayList<RequestForLeave> listRFL = new ArrayList<>();
+        String sql = """
         SELECT
             r.reqid,
             r.did,
@@ -404,36 +404,189 @@ public class RequestForLeaveDBContext extends DBContext {
         OFFSET (? - 1) * ? ROWS
         FETCH NEXT ? ROWS ONLY;
     """;
-    try (Connection con = getConnection();
-         PreparedStatement stm = con.prepareStatement(sql)) {
-        stm.setInt(1, managerEid);
-        stm.setInt(2, pageindex);
-        stm.setInt(3, pagesize);
-        stm.setInt(4, pagesize);
-        try (ResultSet rs = stm.executeQuery()) {
-            while (rs.next()) {
-                listRFL.add(enDataToRFL(rs));
+        try (Connection con = getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
+            stm.setInt(1, managerEid);
+            stm.setInt(2, pageindex);
+            stm.setInt(3, pagesize);
+            stm.setInt(4, pagesize);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    listRFL.add(enDataToRFL(rs));
+                }
             }
         }
+        return listRFL;
     }
-    return listRFL;
-}
 
-public int countByManagerId(int managerEid) throws SQLException {
-    String sql = """
+    public int countByManagerId(int managerEid) throws SQLException {
+        String sql = """
         SELECT COUNT(*) AS Total
         FROM RequestForLeave r
         INNER JOIN Employee e_creator ON r.created_by = e_creator.eid
         WHERE e_creator.ManagerID = ?
     """;
-    try (Connection con = getConnection();
-         PreparedStatement stm = con.prepareStatement(sql)) {
-        stm.setInt(1, managerEid);
-        try (ResultSet rs = stm.executeQuery()) {
-            if (rs.next()) return rs.getInt("Total");
+        try (Connection con = getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
+            stm.setInt(1, managerEid);
+            try (ResultSet rs = stm.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("Total");
+                }
+            }
+        }
+        return 0;
+    }
+
+    // === Detail cho đơn ===
+    public RequestForLeave getDetailByReqId(int reqid) throws SQLException {
+        String sql = """
+        SELECT r.reqid, r.[from], r.[to], r.status, r.created_time,
+               r.decision_note, r.reason_others, r.processed_time,
+               r.rtid, rt.rname AS reason_name,
+               e_creator.eid AS created_by_eid, e_creator.ename AS created_by_name,
+               e_creator.did AS created_by_did, creator_dept.dname AS created_by_dept_name,
+               e_creator.ManagerID AS created_by_ManagerID,
+               e_processor.eid AS processed_by_eid, e_processor.ename AS processed_by_name,
+               e_processor.did AS processed_by_did, processor_dept.dname AS processed_by_dept_name,
+               e_processor.ManagerID AS processed_by_ManagerID,
+               r.did, d.dname AS dept_name
+        FROM RequestForLeave r
+        INNER JOIN Employee e_creator ON r.created_by = e_creator.eid
+        LEFT  JOIN Employee e_processor ON r.processed_by = e_processor.eid
+        INNER JOIN ReasonType rt ON r.rtid = rt.rtid
+        INNER JOIN Department d ON r.did = d.did
+        LEFT  JOIN Department creator_dept   ON e_creator.did   = creator_dept.did
+        LEFT  JOIN Department processor_dept ON e_processor.did = processor_dept.did
+        WHERE r.reqid = ?""";
+        try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql)) {
+            stm.setInt(1, reqid);
+            try (ResultSet rs = stm.executeQuery()) {
+                return rs.next() ? enDataToRFL(rs) : null;
+            }
         }
     }
-    return 0;
-}
 
+// Lấy info cơ bản để header lịch sử
+    public RequestForLeave getDetailBasic(int reqid) throws SQLException {
+        String sql = """
+        SELECT r.reqid, r.[from], r.[to], r.status,
+               rt.rname AS reason_name
+        FROM RequestForLeave r
+        INNER JOIN ReasonType rt ON r.rtid = rt.rtid
+        WHERE r.reqid = ?""";
+        try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql)) {
+            stm.setInt(1, reqid);
+            try (ResultSet rs = stm.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                RequestForLeave r = new RequestForLeave();
+                r.setId(rs.getInt("reqid"));
+                r.setFromDate(rs.getDate("from"));
+                r.setToDate(rs.getDate("to"));
+                r.setStatus(rs.getInt("status"));
+                ReasonType rt = new ReasonType();
+                rt.setRname(rs.getNString("reason_name"));
+                r.setReasonType(rt);
+                return r;
+            }
+        }
+    }
+
+// Lịch sử trạng thái
+    public static class StatusHistoryRow {
+
+        public int newStatus;
+        public Timestamp changedAt;
+        public String note;
+        public Integer changedByEid;
+        public String changedByName;
+    }
+
+    public ArrayList<StatusHistoryRow> getStatusHistory(int reqid) throws SQLException {
+        String sql = """
+        SELECT h.new_status, h.changed_at, h.note,
+               h.changed_by_eid, e.ename AS changed_by_name
+        FROM LeaveStatusHistory h
+        LEFT JOIN Employee e ON e.eid = h.changed_by_eid
+        WHERE h.reqid = ?
+        ORDER BY h.changed_at DESC""";
+        ArrayList<StatusHistoryRow> list = new ArrayList<>();
+        try (Connection c = getConnection(); PreparedStatement stm = c.prepareStatement(sql)) {
+            stm.setInt(1, reqid);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    StatusHistoryRow row = new StatusHistoryRow();
+                    row.newStatus = rs.getInt("new_status");
+                    row.changedAt = rs.getTimestamp("changed_at");
+                    row.note = rs.getNString("note");
+                    row.changedByEid = (Integer) rs.getObject("changed_by_eid");
+                    row.changedByName = rs.getNString("changed_by_name");
+                    list.add(row);
+                }
+            }
+        }
+        return list;
+
+    }
+
+    //list all - dùng cho Admin
+    public ArrayList<RequestForLeave> listAll(int pageindex, int pagesize) throws SQLException {
+        ArrayList<RequestForLeave> listRFL = new ArrayList<>();
+        String sql = """
+        SELECT
+            r.reqid,
+            r.did,
+            d.dname AS dept_name,
+            r.created_time,
+            e_creator.eid AS created_by_eid,
+            e_creator.ename AS created_by_name,
+            e_creator.did AS created_by_did,
+            creator_dept.dname AS created_by_dept_name,
+            e_creator.ManagerID AS created_by_ManagerID,
+            r.[from],
+            r.[to],
+            r.rtid,
+            rt.rname AS reason_name,
+            r.reason_others,
+            r.status,
+            e_processor.eid AS processed_by_eid,
+            e_processor.ename AS processed_by_name,
+            e_processor.did AS processed_by_did,
+            processor_dept.dname AS processed_by_dept_name,
+            e_processor.ManagerID AS processed_by_ManagerID,
+            r.processed_time,
+            r.decision_note
+        FROM RequestForLeave r
+        INNER JOIN Employee e_creator ON r.created_by = e_creator.eid
+        LEFT JOIN Employee e_processor ON r.processed_by = e_processor.eid
+        INNER JOIN ReasonType rt ON r.rtid = rt.rtid
+        INNER JOIN Department d ON r.did = d.did
+        LEFT JOIN Department creator_dept ON e_creator.did = creator_dept.did
+        LEFT JOIN Department processor_dept ON e_processor.did = processor_dept.did
+        ORDER BY r.reqid DESC
+        OFFSET (? - 1) * ? ROWS
+        FETCH NEXT ? ROWS ONLY;
+    """;
+        try (Connection con = getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
+            stm.setInt(1, pageindex);
+            stm.setInt(2, pagesize);
+            stm.setInt(3, pagesize);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    listRFL.add(enDataToRFL(rs));
+                }
+            }
+        }
+        return listRFL;
+    }
+
+    public int countAll() throws SQLException {
+        String sql = "SELECT COUNT(*) AS Total FROM RequestForLeave";
+        try (Connection con = getConnection(); PreparedStatement stm = con.prepareStatement(sql); ResultSet rs = stm.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("Total");
+            }
+        }
+        return 0;
+    }
 }

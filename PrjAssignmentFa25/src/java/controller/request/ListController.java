@@ -38,7 +38,7 @@ public class ListController extends BaseRequiredAuthorizationController {
     protected void processGet(HttpServletRequest req, HttpServletResponse resp, User user) throws ServletException, IOException {
         try {
             RequestForLeaveDBContext rflDB = new RequestForLeaveDBContext();
-            int pageSize = 5;
+            int pageSize = PAGE_SIZE;
 
             // Lấy page và tab từ request
             String pageStr = req.getParameter("page");
@@ -49,10 +49,11 @@ public class ListController extends BaseRequiredAuthorizationController {
             } else {
                 page = 1;
             }
-            
-            boolean isAdmin = user.ha
+
+            //phân quyền theo cấp role
             int rlevel = user.getRoles().get(0).getRlevel();
-            boolean isManager = rlevel < 3;
+            boolean isManager = (rlevel < 3);
+            boolean isAdmin = (rlevel == 0);
 
             // List của Emplyee (default)
             int eid = user.getEmployee().getId();
@@ -64,15 +65,28 @@ public class ListController extends BaseRequiredAuthorizationController {
             ArrayList<RequestForLeave> listRflDept = null;
             int totalPageDept = 0;
             int pageIndexDept = 1;
-            if (isManager) {
-                int did = user.getEmployee().getDepartment().getId();
+
+            if (isAdmin) {
+                // === ADMIN: Lấy toàn bộ đơn ===
                 if ("team".equals(tab)) {
                     pageIndexDept = page;
-                    listRflDept = rflDB.listByDeptsId(did, page, pageSize);
+                    listRflDept = rflDB.listAll(page, pageSize); // lấy tất cả
                 } else {
-                    listRflDept = rflDB.listByDeptsId(did, 1, pageSize); // trang 1 mặc định
+                    listRflDept = rflDB.listAll(1, pageSize); // trang 1 mặc định
                 }
-                int totalDept = rflDB.countByDepartmentId(did);
+                int totalDept = rflDB.countAll();
+                totalPageDept = (int) Math.ceil((double) totalDept / pageSize);
+
+            } else if (isManager) {
+                // === MANAGER: chỉ lấy đơn của cấp dưới trực tiếp ===
+                int managerEid = user.getEmployee().getId();
+                if ("team".equals(tab)) {
+                    pageIndexDept = page;
+                    listRflDept = rflDB.listByManagerId(managerEid, page, pageSize);
+                } else {
+                    listRflDept = rflDB.listByManagerId(managerEid, 1, pageSize);
+                }
+                int totalDept = rflDB.countByManagerId(managerEid);
                 totalPageDept = (int) Math.ceil((double) totalDept / pageSize);
             }
 
@@ -80,6 +94,7 @@ public class ListController extends BaseRequiredAuthorizationController {
             req.setAttribute("listRflEmp", listRflEmp);
             req.setAttribute("listRflDept", listRflDept);
             req.setAttribute("isManager", isManager);
+            req.setAttribute("isAdmin", isAdmin);
 
             req.setAttribute("pageIndexEmp", "team".equals(tab) ? 1 : page); // nếu đang ở team → my về trang 1
             req.setAttribute("pageIndexDept", pageIndexDept);

@@ -299,3 +299,8 @@ INSERT INTO [dbo].[Enrollment] ([eid], [uid], [active]) VALUES (@eid, @uid, 1);
 INSERT INTO [dbo].[UserRole] ([uid], [rid]) VALUES (@uid, 5);
 
 
+
+INSERT INTO RoleFeature(rid, fid)
+SELECT r.rid, f.fid FROM Role r CROSS JOIN Feature f
+WHERE f.url IN ('/request/detail','/request/history')
+  AND r.rcode IN ('ADMIN','DIR','MAN','HR','EMP'); -- tuỳ chính sách

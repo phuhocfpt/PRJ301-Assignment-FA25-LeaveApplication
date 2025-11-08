@@ -220,6 +220,14 @@ p.redirectAccessDenied-msg {
     display: block;
     color: #495057;
 }
+/* Bổ sung: in đậm label cho ô full-width (Lý do khác, v.v.) */
+.form-container .form-group-full label {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    display: block;
+    color: #495057;
+}
+
 .form-container .form-group input[type="text"], /* Sửa: từ date sang text */
 .form-container .form-group select,
 .form-container .form-group textarea {

@@ -72,13 +72,13 @@ public abstract class BaseRequiredAuthorizationController extends BaseRequiredAu
             } else {
                 // Nếu không có quyền, báo lỗi và chuyển đến trang báo lỗi (8 giây)
                 req.setAttribute("errorLoginMsg", "Access Denied! You do not have permission to access this page.");
-                req.getRequestDispatcher("view/msg/msgLogin.jsp").forward(req, resp);
+                req.getRequestDispatcher("/view/msg/msgLogin.jsp").forward(req, resp);
             }
         } catch (SQLException ex) {
             //RoleDBContext.getByUserID() fail
             Logger.getLogger(BaseRequiredAuthorizationController.class.getName()).log(Level.SEVERE, null, ex);
             req.setAttribute("errorLoginMsg", "Lỗi CSDL khi kiểm tra quyền truy cập.");
-            req.getRequestDispatcher("view/msg/msgLogin.jsp").forward(req, resp);
+            req.getRequestDispatcher("/view/msg/msgLogin.jsp").forward(req, resp);
         }
     }
 
@@ -98,13 +98,13 @@ public abstract class BaseRequiredAuthorizationController extends BaseRequiredAu
             } else {
                 // Nếu không có quyền, báo lỗi và chuyển đến trang báo lỗi (8 giây)
                 req.setAttribute("errorLoginMsg", "Access Denied! You do not have permission to access this page.");
-                req.getRequestDispatcher("view/msg/msgLogin.jsp").forward(req, resp);
+                req.getRequestDispatcher("/view/msg/msgLogin.jsp").forward(req, resp);
             }
         } catch (SQLException ex) {
             //RoleDBContext.getByUserId() fail
             Logger.getLogger(BaseRequiredAuthorizationController.class.getName()).log(Level.SEVERE, null, ex);
             req.setAttribute("errorLoginMsg", "Lỗi DB khi kiểm tra quyền truy cập.");
-            req.getRequestDispatcher("view/msg/msgLogin.jsp").forward(req, resp);
+            req.getRequestDispatcher("/view/msg/msgLogin.jsp").forward(req, resp);
         }
     }
 
