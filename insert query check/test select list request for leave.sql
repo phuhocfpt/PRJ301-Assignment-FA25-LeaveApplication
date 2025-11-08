@@ -304,3 +304,196 @@ INSERT INTO RoleFeature(rid, fid)
 SELECT r.rid, f.fid FROM Role r CROSS JOIN Feature f
 WHERE f.url IN ('/request/detail','/request/history')
   AND r.rcode IN ('ADMIN','DIR','MAN','HR','EMP'); -- tuỳ chính sách
+
+
+  SELECT r.reqid, r.[from], r.[to], r.status, r.created_time,
+           r.processed_time, r.decision_note, r.reason_others,
+           rt.rname AS reason_name,
+           e_creator.eid AS created_by_eid, e_creator.ename AS created_by_name, e_creator.ManagerID AS created_by_ManagerID,
+           d.did, d.dname AS dept_name,
+           e_proc.eid AS processed_by_eid, e_proc.ename AS processed_by_name
+    FROM RequestForLeave r
+    JOIN ReasonType rt ON rt.rtid = r.rtid
+    JOIN Employee e_creator ON e_creator.eid = r.created_by
+    JOIN Department d ON d.did = r.did
+    LEFT JOIN Employee e_proc ON e_proc.eid = r.processed_by
+    WHERE r.reqid = 2
+
+	SELECT r.rcode, f.url
+
+FROM RoleFeature rf
+JOIN Role r ON r.rid = rf.rid
+JOIN Feature f ON f.fid = rf.fid
+WHERE f.url IN ('/request/detail','/request/history')
+ORDER BY r.rcode, f.url;
+
+
+SELECT rid, rcode FROM [Role] WHERE rcode = 'EMP';
+SELECT fid, url FROM [Feature] WHERE url IN ('/request/detail', '/request/history');
+
+SELECT r.rname, f.url from [Role] r JOIN RoleFeature rf ON r.rid = rf.rid JOIN Feature f on rf.fid = f.fid
+
+
+
+
+
+SELECT r.rcode, f.url
+FROM [User] u
+JOIN UserRole ur ON ur.uid = u.uid
+JOIN Role r ON r.rid = ur.rid
+JOIN RoleFeature rf ON rf.rid = r.rid
+JOIN Feature f ON f.fid = rf.fid
+WHERE u.uid = 6
+  AND f.url IN ('/request/detail','/request/history')
+ORDER BY r.rcode, f.url;
+
+
+-- 1. Lấy rid của role EMP
+SELECT rid FROM [Role] WHERE rcode = 'EMP';
+
+-- 2. Lấy fid của feature /request/detail
+SELECT fid FROM [Feature] WHERE url = '/request/detail';
+
+SELECT 1 FROM RoleFeature
+    WHERE rid = (SELECT rid FROM [Role] WHERE rcode = 'EMP')
+      AND fid = (SELECT fid FROM [Feature] WHERE url = '/request/detail')
+
+	  INSERT INTO RoleFeature(rid, fid)
+VALUES (
+    (SELECT rid FROM [Role] WHERE rcode = 'EMP'),
+    (SELECT fid FROM [Feature] WHERE url = '/request/detail')
+);
+
+-- Sửa URL (nếu lệch)
+UPDATE Feature SET url = '/request/detail'
+WHERE url LIKE '%/request/detail%';  -- cân nhắc điều kiện phù hợp
+
+-- Hoặc tạo mới (nếu thiếu)
+
+IF NOT EXISTS (SELECT 1 FROM Feature WHERE url = '/request/detail')
+    INSERT INTO Feature(url) VALUES('/request/detail');
+
+
+-- đảm bảo Feature tồn tại
+IF NOT EXISTS (SELECT 1 FROM Feature WHERE url = '/request/detail')
+    INSERT INTO Feature(url) VALUES ('/request/detail');
+
+-- gán cho các role cần thiết
+INSERT INTO RoleFeature(rid, fid)
+SELECT r.rid, f.fid
+FROM Role r
+JOIN Feature f ON f.url = '/request/detail'
+WHERE r.rcode IN ('EMP','MAN','HR','ADMIN')
+  AND NOT EXISTS (
+      SELECT 1 FROM RoleFeature rf
+      WHERE rf.rid = r.rid AND rf.fid = f.fid
+  );	
+
+
+
+
+
+
+
+
+
+  SELECT r.rcode, f.url
+FROM [User] u
+JOIN UserRole     ur ON ur.uid = u.uid
+JOIN Role         r  ON r.rid = ur.rid          -- << thêm join Role
+JOIN RoleFeature  rf ON rf.rid = r.rid
+JOIN Feature      f  ON f.fid = rf.fid
+WHERE u.username = 'a2'
+  AND f.url IN ('/request/detail','/request/history')
+ORDER BY f.url, r.rcode;
+
+
+
+
+
+
+
+
+-- 1) Đơn có created_by không có trong Employee
+SELECT r.*
+FROM RequestForLeave r
+WHERE NOT EXISTS (SELECT 1 FROM Employee e WHERE e.eid = r.created_by);
+
+-- 2) Đơn có did không có trong Department
+SELECT r.*
+FROM RequestForLeave r
+WHERE NOT EXISTS (SELECT 1 FROM Department d WHERE d.did = r.did);
+
+-- 3) Đơn có rtid không có trong ReasonType
+SELECT r.*
+FROM RequestForLeave r
+WHERE NOT EXISTS (SELECT 1 FROM ReasonType rt WHERE rt.rtid = r.rtid);
+
+
+SELECT r.reqid
+FROM RequestForLeave r
+INNER JOIN Employee   e_creator  ON r.created_by  = e_creator.eid
+LEFT  JOIN Employee   e_processor ON r.processed_by = e_processor.eid
+INNER JOIN ReasonType rt         ON r.rtid       = rt.rtid
+INNER JOIN Department d          ON r.did        = d.did
+ORDER BY r.reqid DESC
+OFFSET (1 - 1) * 5 ROWS        -- pageindex = 1, pagesize = 5
+FETCH NEXT 5 ROWS ONLY;
+
+
+
+DECLARE @uid INT = 3; -- uid đang đăng nhập
+SELECT u.uid, r.rcode, f.url
+FROM [User] u
+JOIN UserRole ur ON ur.uid=u.uid
+JOIN Role r ON r.rid=ur.rid
+JOIN RoleFeature rf ON rf.rid=r.rid
+JOIN Feature f ON f.fid=rf.fid
+WHERE u.uid=@uid AND f.url IN ('/request/detail', '/request/history');
+
+
+
+
+-- A. Feature tồn tại?
+SELECT * FROM Feature WHERE url IN ('/request/detail','/request/history');
+
+-- B. RoleFeature: role nào có 2 feature này?
+SELECT r.rcode, f.url
+FROM RoleFeature rf
+JOIN Role r ON r.rid = rf.rid
+JOIN Feature f ON f.fid = rf.fid
+WHERE f.url IN ('/request/detail','/request/history')
+ORDER BY r.rcode, f.url;
+
+-- C. User hiện đăng nhập (ví dụ uid = 3) có role nào?
+SELECT u.uid, u.username, r.rcode
+FROM [User] u
+JOIN UserRole ur ON ur.uid = u.uid
+JOIN Role r ON r.rid = ur.rid
+WHERE u.uid = 3; -- thay uid của bạn
+
+
+-- 2) Gán quyền cho DIR (và MAN tuỳ chọn), tránh trùng bằng NOT EXISTS
+INSERT INTO RoleFeature(rid, fid)
+SELECT r.rid, f.fid
+FROM Role r
+JOIN Feature f ON f.url IN ('/request/detail','/request/history')
+WHERE r.rcode IN ('DIR')  -- thêm 'MAN' nếu cần: ('DIR','MAN')
+  AND NOT EXISTS (
+      SELECT 1
+      FROM RoleFeature rf
+      WHERE rf.rid = r.rid AND rf.fid = f.fid
+  );
+
+
+
+  -- A. Trạng thái đơn đã đổi chưa?
+SELECT reqid, status, processed_by, processed_time, decision_note
+FROM RequestForLeave
+WHERE reqid = 2;
+
+-- B. Có ghi lịch sử chưa?
+SELECT TOP 20 hid, reqid, new_status, changed_at, changed_by_eid, note
+FROM LeaveStatusHistory
+WHERE reqid = 2
+ORDER BY changed_at DESC;
